@@ -1,6 +1,9 @@
 package com.mkalki.cloudtaskapi.controller;
 
+import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.model.Task;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import com.mkalki.cloudtaskapi.model.Greeting;
@@ -26,5 +29,10 @@ public class HelloController {
     @GetMapping("/tasks")
     public List<Task> getTasks() {
         return taskService.getAllTasks();
+    }
+
+    @PostMapping("/tasks")
+    public Task createTask(@RequestBody CreateTaskRequest request){
+        return taskService.createTask(request);
     }
 }

@@ -1,5 +1,6 @@
 package com.mkalki.cloudtaskapi.service;
 
+import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.model.Task;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +33,28 @@ public class TaskService {
     }
 
 
+
     public List<Task> getAllTasks() {
         return tasks;
+    }
+
+    public Task createTask(CreateTaskRequest request){
+
+        Long nextId;
+
+        if(tasks.isEmpty()){
+            nextId=1L;
+        }else{
+            nextId=tasks.get(tasks.size()-1).getId()+1;
+        }
+
+        Task task=new Task(
+                nextId,
+                request.getTitle(),
+                request.getDescription(),
+                false
+        );
+        tasks.add(task);
+        return task;
     }
 }
