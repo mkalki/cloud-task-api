@@ -6,9 +6,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.mkalki.cloudtaskapi.model.Greeting;
 import java.util.ArrayList;
 import java.util.List;
+import com.mkalki.cloudtaskapi.service.TaskService;
 
 @RestController
 public class HelloController {
+
+    private TaskService taskService = new TaskService();
 
     @GetMapping("/hello")
     public Greeting hello(){
@@ -18,21 +21,6 @@ public class HelloController {
 
     @GetMapping("/tasks")
     public List<Task> getTasks() {
-        List<Task> tasks = new ArrayList<>();
-        Task task1 = new Task(1L, "Learn Spring Boot",
-                "Complete Lesson 3", false);
-
-        Task task2 = new Task(2L, "Learn collection frameworks",
-                "Complete Lesson 1", false);
-
-        Task task3 = new Task(3L, "solve leetcode",
-                "2 sum", false);
-
-        tasks.add(task1);
-        tasks.add(task2);
-        tasks.add(task3);
-
-        return tasks;
-
+        return taskService.getAllTasks();
     }
 }
