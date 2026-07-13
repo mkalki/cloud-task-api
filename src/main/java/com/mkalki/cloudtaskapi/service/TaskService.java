@@ -1,10 +1,12 @@
 package com.mkalki.cloudtaskapi.service;
 
 import com.mkalki.cloudtaskapi.model.Task;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class TaskService {
 
     private List<Task> tasks=new ArrayList<>();

@@ -11,7 +11,11 @@ import com.mkalki.cloudtaskapi.service.TaskService;
 @RestController
 public class HelloController {
 
-    private TaskService taskService = new TaskService();
+    private final TaskService taskService;
+
+    public HelloController(TaskService taskService){
+        this.taskService = taskService;
+    }
 
     @GetMapping("/hello")
     public Greeting hello(){
