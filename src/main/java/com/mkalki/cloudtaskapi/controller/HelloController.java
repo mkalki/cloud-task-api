@@ -1,6 +1,7 @@
 package com.mkalki.cloudtaskapi.controller;
 
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
+import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.model.Task;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -33,5 +34,11 @@ public class HelloController {
     @ResponseStatus(HttpStatus.CREATED)
     public Task createTask(@RequestBody CreateTaskRequest request){
         return taskService.createTask(request);
+    }
+
+    @PutMapping("/tasks/{id}")
+    public Task updateTask(@PathVariable Long id,
+                           @RequestBody UpdateTaskRequest request){
+        return taskService.updateTask(id,request);
     }
 }

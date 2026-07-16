@@ -1,6 +1,8 @@
 package com.mkalki.cloudtaskapi.service;
 
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
+import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
+import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
 import com.mkalki.cloudtaskapi.model.Task;
 import org.springframework.stereotype.Service;
 
@@ -56,5 +58,20 @@ public class TaskService {
         );
         tasks.add(task);
         return task;
+    }
+
+    public Task updateTask(Long id,UpdateTaskRequest request){
+        for(Task task:tasks){
+            if(task.getId().equals(id)){
+                task.setTitle(request.getTitle());
+                task.setDescription(request.getDescription());
+                task.setCompleted(request.isCompleted());
+
+                return task;
+            }
+
+        }
+
+        throw new TaskNotFoundException("Task not found");
     }
 }
