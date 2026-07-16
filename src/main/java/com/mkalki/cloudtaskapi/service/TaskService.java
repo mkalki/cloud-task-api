@@ -74,4 +74,16 @@ public class TaskService {
 
         throw new TaskNotFoundException("Task not found");
     }
+
+    public void deleteTask(Long id){
+
+        for(int i=0;i<tasks.size();i++){
+            if(tasks.get(i).getId().equals(id)){
+
+                tasks.remove(i);
+                return;
+            }
+        }
+        throw new TaskNotFoundException("Task not found");
+    }
 }

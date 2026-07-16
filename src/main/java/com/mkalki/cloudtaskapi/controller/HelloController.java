@@ -41,4 +41,10 @@ public class HelloController {
                            @RequestBody UpdateTaskRequest request){
         return taskService.updateTask(id,request);
     }
+
+    @DeleteMapping("/tasks/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTask(@PathVariable Long id){
+        taskService.deleteTask(id);
+    }
 }
