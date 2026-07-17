@@ -3,19 +3,20 @@ package com.mkalki.cloudtaskapi.controller;
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.model.Task;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import com.mkalki.cloudtaskapi.model.Greeting;
-import java.util.ArrayList;
+
 import java.util.List;
 import com.mkalki.cloudtaskapi.service.TaskService;
 
 @RestController
-public class HelloController {
+public class TaskController {
 
     private final TaskService taskService;
 
-    public HelloController(TaskService taskService){
+    public TaskController(TaskService taskService){
         this.taskService = taskService;
     }
 
@@ -32,12 +33,12 @@ public class HelloController {
 
     @PostMapping("/tasks")
     @ResponseStatus(HttpStatus.CREATED)
-    public Task createTask(@RequestBody CreateTaskRequest request){
+    public Task createTask(@Valid @RequestBody CreateTaskRequest request){
         return taskService.createTask(request);
     }
 
     @PutMapping("/tasks/{id}")
-    public Task updateTask(@PathVariable Long id,
+    public Task updateTask(@Valid @PathVariable Long id,
                            @RequestBody UpdateTaskRequest request){
         return taskService.updateTask(id,request);
     }
