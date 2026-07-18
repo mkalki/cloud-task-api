@@ -4,6 +4,7 @@ import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
 import com.mkalki.cloudtaskapi.model.Task;
+import com.mkalki.cloudtaskapi.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -12,78 +13,52 @@ import java.util.List;
 @Service
 public class TaskService {
 
-    private List<Task> tasks=new ArrayList<>();
+    private final TaskRepository taskRepository;
 
-    public TaskService() {
-        tasks.add(new Task(
-                1L,
-                "Learn Spring Boot",
-                "Complete Lesson 3",
-                false));
+    public TaskService(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
 
-        tasks.add(new Task(
-                2L,
-                "Learn collection frameworks",
-                "Complete Lesson 1",
-                false));
-
-        tasks.add(new Task(
-                3L,
-                "Solve LeetCode",
-                "2 Sum",
-                false));
     }
 
 
 
     public List<Task> getAllTasks() {
-        return tasks;
+        return taskRepository.findAll();
     }
 
     public Task createTask(CreateTaskRequest request){
 
-        Long nextId;
-
-        if(tasks.isEmpty()){
-            nextId=1L;
-        }else{
-            nextId=tasks.get(tasks.size()-1).getId()+1;
-        }
-
-        Task task=new Task(
-                nextId,
+        Task task = new Task(
+                null,
                 request.getTitle(),
                 request.getDescription(),
                 false
         );
-        tasks.add(task);
-        return task;
+
+        return taskRepository.save(task);
+    }
+
+    public Task getTaskById(Long id) {
+        return taskRepository.findById(id).orElseThrow(() ->
+                new TaskNotFoundException("Task not found"));
     }
 
     public Task updateTask(Long id,UpdateTaskRequest request){
-        for(Task task:tasks){
-            if(task.getId().equals(id)){
-                task.setTitle(request.getTitle());
-                task.setDescription(request.getDescription());
-                task.setCompleted(request.isCompleted());
 
-                return task;
-            }
+        Task task = getTaskById(id);
+       task.setTitle(request.getTitle());
+       task.setDescription(request.getDescription());
+       task.setCompleted(request.isCompleted());
 
-        }
+       return taskRepository.save(task);
 
-        throw new TaskNotFoundException("Task not found");
     }
 
-    public void deleteTask(Long id){
+    public void deleteTask(Long id) {
 
-        for(int i=0;i<tasks.size();i++){
-            if(tasks.get(i).getId().equals(id)){
-
-                tasks.remove(i);
-                return;
-            }
-        }
-        throw new TaskNotFoundException("Task not found");
+        Task task = getTaskById(id);
+        taskRepository.delete(task);
     }
+
+
 }

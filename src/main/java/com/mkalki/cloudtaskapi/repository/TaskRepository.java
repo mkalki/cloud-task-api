@@ -1,0 +1,7 @@
+package com.mkalki.cloudtaskapi.repository;
+
+import com.mkalki.cloudtaskapi.model.Task;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface TaskRepository extends JpaRepository<Task, Long> {
+}
