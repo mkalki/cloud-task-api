@@ -4,11 +4,12 @@ import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.model.Task;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import com.mkalki.cloudtaskapi.model.Greeting;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import com.mkalki.cloudtaskapi.service.TaskService;
 
 @RestController
@@ -20,19 +21,19 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    @GetMapping("/hello")
-    public Greeting hello(){
-        Greeting greeting=new Greeting("hello world","mkalki");
-        return greeting;
-    }
 
     @GetMapping("/tasks/{id}")
     public Task getTaskById(@PathVariable Long id) {
         return taskService.getTaskById(id);
     }
+
     @GetMapping("/tasks")
-    public List<Task> getTasks() {
-        return taskService.getAllTasks();
+    public Page<Task> getTasks(
+            @RequestParam int page,
+            @RequestParam int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return taskService.getAllTasks(pageable);
     }
 
     @PostMapping("/tasks")
