@@ -23,8 +23,11 @@ public class TaskService {
 
 
 
-    public Page<Task> getAllTasks(Pageable pageable) {
-        return taskRepository.findAll(pageable);
+    public Page<Task> getAllTasks(Boolean completed,Pageable pageable) {
+        if(completed==null) {
+            return taskRepository.findAll(pageable);
+        }
+            return taskRepository.findByCompleted(completed, pageable);
     }
 
     public Task createTask(CreateTaskRequest request){
