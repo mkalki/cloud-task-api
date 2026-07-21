@@ -33,7 +33,8 @@ public class TaskController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String sort,
-            @RequestParam(required = false) Boolean completed
+            @RequestParam(required = false) Boolean completed,
+            @RequestParam(required = false) String title
     ) {
 
         String[] sortParts = sort.split(",");
@@ -49,7 +50,7 @@ public class TaskController {
             sortObject=Sort.by(sortParts[0]).ascending();
         }
         Pageable pageable = PageRequest.of(page, size ,sortObject);
-        return taskService.getAllTasks(completed, pageable);
+        return taskService.getAllTasks(completed,title, pageable);
     }
 
     @PostMapping("/tasks")

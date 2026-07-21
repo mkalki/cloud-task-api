@@ -23,11 +23,26 @@ public class TaskService {
 
 
 
-    public Page<Task> getAllTasks(Boolean completed,Pageable pageable) {
-        if(completed==null) {
-            return taskRepository.findAll(pageable);
-        }
-            return taskRepository.findByCompleted(completed, pageable);
+    public Page<Task> getAllTasks(
+            Boolean completed,
+            String title,
+            Pageable pageable) {
+        boolean hasTitle = title != null && !title.isBlank();
+
+       if(completed == null && !hasTitle){
+           return taskRepository.findAll(pageable);
+       }
+       if(completed != null && !hasTitle){
+           return taskRepository.findByCompleted(completed, pageable);
+       }
+       if(completed == null ){
+           return taskRepository.findByTitleContainingIgnoreCase(title, pageable);
+       }
+       return taskRepository.findByCompletedAndTitleContainingIgnoreCase(
+               completed,
+               title,
+               pageable
+       );
     }
 
     public Task createTask(CreateTaskRequest request){
