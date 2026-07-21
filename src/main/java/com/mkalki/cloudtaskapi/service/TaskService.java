@@ -5,7 +5,9 @@ import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
 import com.mkalki.cloudtaskapi.model.Task;
 import com.mkalki.cloudtaskapi.repository.TaskRepository;
+import com.mkalki.cloudtaskapi.specification.TaskSpecification;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 
@@ -27,22 +29,17 @@ public class TaskService {
             Boolean completed,
             String title,
             Pageable pageable) {
-        boolean hasTitle = title != null && !title.isBlank();
+        Specification<Task> spec = Specification.unrestricted();
 
-       if(completed == null && !hasTitle){
-           return taskRepository.findAll(pageable);
+       if(completed != null ){
+           spec = spec.and(TaskSpecification.byCompleted(completed));
        }
-       if(completed != null && !hasTitle){
-           return taskRepository.findByCompleted(completed, pageable);
+       if(title != null && !title.isBlank()){
+           spec =spec.and(TaskSpecification.titleContains(title));
        }
-       if(completed == null ){
-           return taskRepository.findByTitleContainingIgnoreCase(title, pageable);
-       }
-       return taskRepository.findByCompletedAndTitleContainingIgnoreCase(
-               completed,
-               title,
-               pageable
-       );
+
+       return taskRepository.findAll(spec, pageable);
+
     }
 
     public Task createTask(CreateTaskRequest request){
