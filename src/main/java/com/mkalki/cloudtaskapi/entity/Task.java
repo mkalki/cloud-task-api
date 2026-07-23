@@ -1,4 +1,4 @@
-package com.mkalki.cloudtaskapi.model;
+package com.mkalki.cloudtaskapi.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

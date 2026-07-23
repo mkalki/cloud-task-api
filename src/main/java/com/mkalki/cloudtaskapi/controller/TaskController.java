@@ -2,7 +2,7 @@ package com.mkalki.cloudtaskapi.controller;
 
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
-import com.mkalki.cloudtaskapi.model.Task;
+import com.mkalki.cloudtaskapi.entity.Task;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

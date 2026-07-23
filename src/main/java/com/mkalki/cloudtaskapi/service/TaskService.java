@@ -3,7 +3,7 @@ package com.mkalki.cloudtaskapi.service;
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
-import com.mkalki.cloudtaskapi.model.Task;
+import com.mkalki.cloudtaskapi.entity.Task;
 import com.mkalki.cloudtaskapi.repository.TaskRepository;
 import com.mkalki.cloudtaskapi.specification.TaskSpecification;
 import org.springframework.data.domain.Page;

@@ -1,6 +1,6 @@
 package com.mkalki.cloudtaskapi.specification;
 
-import com.mkalki.cloudtaskapi.model.Task;
+import com.mkalki.cloudtaskapi.entity.Task;
 import org.springframework.data.jpa.domain.Specification;
 
 public class TaskSpecification {
