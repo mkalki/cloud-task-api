@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 
 
 @Service
@@ -29,7 +30,7 @@ public class TaskService {
             Boolean completed,
             String title,
             Pageable pageable) {
-        Specification<Task> spec = Specification.unrestricted();
+        Specification<Task> spec = TaskSpecification.notDeleted();
 
        if(completed != null ){
            spec = spec.and(TaskSpecification.byCompleted(completed));
@@ -55,7 +56,7 @@ public class TaskService {
     }
 
     public Task getTaskById(Long id) {
-        return taskRepository.findById(id).orElseThrow(() ->
+        return taskRepository.findByIdAndDeletedFalse(id).orElseThrow(() ->
                 new TaskNotFoundException("Task not found"));
     }
 
@@ -73,7 +74,10 @@ public class TaskService {
     public void deleteTask(Long id) {
 
         Task task = getTaskById(id);
-        taskRepository.delete(task);
+        task.setDeleted(true);
+        task.setDeletedAt(LocalDateTime.now());
+
+        taskRepository.save(task);
     }
 
 

@@ -21,4 +21,9 @@ public class TaskSpecification {
                         "%" + title.toLowerCase() + "%"
                 );
     }
+
+    public static Specification<Task> notDeleted(){
+        return (root, criteriaQuery, criteriaBuilder) ->
+            criteriaBuilder.isFalse(root.get("deleted"));
+    }
 }
