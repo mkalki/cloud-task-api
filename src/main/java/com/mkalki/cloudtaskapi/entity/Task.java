@@ -1,5 +1,6 @@
 package com.mkalki.cloudtaskapi.entity;
 
+import com.mkalki.cloudtaskapi.enums.Priority;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
@@ -17,15 +18,20 @@ public class Task extends BaseEntity {
     private String description;
     private boolean completed;
 
+    @Enumerated(EnumType.STRING)
+    private Priority priority;
+
     public Task(Long id,
                 String title,
                 String description,
-                boolean completed){
+                boolean completed,
+                Priority priority ) {
 
         this.id=id;
         this.title=title;
         this.description=description;
         this.completed=completed;
+        this.priority=priority;
     }
 
     public Long getId(){
@@ -44,6 +50,10 @@ public class Task extends BaseEntity {
         return completed;
     }
 
+    public Priority getPriority(){
+        return priority;
+    }
+
     public void setTitle(String title){
         this.title=title;
     }
@@ -54,6 +64,10 @@ public class Task extends BaseEntity {
 
     public void setCompleted(boolean completed){
         this.completed=completed;
+    }
+
+    public void setPriority(Priority priority){
+        this.priority=priority;
     }
 
     public Task(){

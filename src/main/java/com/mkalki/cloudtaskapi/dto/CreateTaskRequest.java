@@ -1,5 +1,6 @@
 package com.mkalki.cloudtaskapi.dto;
 
+import com.mkalki.cloudtaskapi.enums.Priority;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -12,14 +13,13 @@ public class CreateTaskRequest {
     @Size(max=500, message = "Description cannot exceed 500 characters")
     private String description;
 
+    private Priority priority;
+
     public CreateTaskRequest(){
 
     }
 
-    public CreateTaskRequest(String title,String description){
-        this.title=title;
-        this.description=description;
-    }
+
 
     public String getTitle(){
         return title;
@@ -27,5 +27,9 @@ public class CreateTaskRequest {
 
     public String getDescription(){
         return description;
+    }
+
+    public Priority getPriority(){
+        return priority;
     }
 }

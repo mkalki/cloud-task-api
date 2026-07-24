@@ -2,6 +2,7 @@ package com.mkalki.cloudtaskapi.service;
 
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
+import com.mkalki.cloudtaskapi.enums.Priority;
 import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
 import com.mkalki.cloudtaskapi.entity.Task;
 import com.mkalki.cloudtaskapi.repository.TaskRepository;
@@ -44,12 +45,17 @@ public class TaskService {
     }
 
     public Task createTask(CreateTaskRequest request){
+        Priority priority = request.getPriority();
+        if(priority == null){
+            priority = Priority.LOW;
+        }
 
         Task task = new Task(
                 null,
                 request.getTitle(),
                 request.getDescription(),
-                false
+                false,
+                priority
         );
 
         return taskRepository.save(task);
@@ -66,6 +72,9 @@ public class TaskService {
        task.setTitle(request.getTitle());
        task.setDescription(request.getDescription());
        task.setCompleted(request.isCompleted());
+       if(request.getPriority() != null){
+           task.setPriority(request.getPriority());
+       }
 
        return taskRepository.save(task);
 
