@@ -1,15 +1,16 @@
 package com.mkalki.cloudtaskapi.specification;
 
 import com.mkalki.cloudtaskapi.entity.Task;
+import com.mkalki.cloudtaskapi.enums.Status;
 import org.springframework.data.jpa.domain.Specification;
 
 public class TaskSpecification {
 
-    public static Specification<Task> byCompleted(boolean completed) {
+    public static Specification<Task> byStatus(Status status) {
         return (root, criteriaQuery, criteriaBuilder) ->
                 criteriaBuilder.equal(
-                        root.get("completed"),
-                        completed
+                        root.get("status"),
+                        status
                 );
     }
 

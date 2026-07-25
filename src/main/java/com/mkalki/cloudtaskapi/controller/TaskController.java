@@ -3,15 +3,15 @@ package com.mkalki.cloudtaskapi.controller;
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.entity.Task;
+import com.mkalki.cloudtaskapi.enums.Status;
+import com.mkalki.cloudtaskapi.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Pageable;
-
-import com.mkalki.cloudtaskapi.service.TaskService;
 
 @RestController
 public class TaskController {
@@ -33,7 +33,7 @@ public class TaskController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String sort,
-            @RequestParam(required = false) Boolean completed,
+            @RequestParam(required = false) Status status,
             @RequestParam(required = false) String title
     ) {
 
@@ -50,7 +50,7 @@ public class TaskController {
             sortObject=Sort.by(sortParts[0]).ascending();
         }
         Pageable pageable = PageRequest.of(page, size ,sortObject);
-        return taskService.getAllTasks(completed,title, pageable);
+        return taskService.getAllTasks(status,title, pageable);
     }
 
     @PostMapping("/tasks")

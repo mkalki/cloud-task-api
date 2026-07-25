@@ -3,6 +3,7 @@ package com.mkalki.cloudtaskapi.service;
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.enums.Priority;
+import com.mkalki.cloudtaskapi.enums.Status;
 import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
 import com.mkalki.cloudtaskapi.entity.Task;
 import com.mkalki.cloudtaskapi.repository.TaskRepository;
@@ -28,13 +29,13 @@ public class TaskService {
 
 
     public Page<Task> getAllTasks(
-            Boolean completed,
+            Status status,
             String title,
             Pageable pageable) {
         Specification<Task> spec = TaskSpecification.notDeleted();
 
-       if(completed != null ){
-           spec = spec.and(TaskSpecification.byCompleted(completed));
+       if(status != null ){
+           spec = spec.and(TaskSpecification.byStatus(status));
        }
        if(title != null && !title.isBlank()){
            spec =spec.and(TaskSpecification.titleContains(title));
@@ -54,7 +55,7 @@ public class TaskService {
                 null,
                 request.getTitle(),
                 request.getDescription(),
-                false,
+                Status.TODO,
                 priority
         );
 
@@ -69,9 +70,15 @@ public class TaskService {
     public Task updateTask(Long id,UpdateTaskRequest request){
 
         Task task = getTaskById(id);
-       task.setTitle(request.getTitle());
-       task.setDescription(request.getDescription());
-       task.setCompleted(request.isCompleted());
+        if(request.getTitle() != null){
+            task.setTitle(request.getTitle());
+        }
+       if(request.getDescription() != null){
+           task.setDescription(request.getDescription());
+       }
+       if(request.getStatus() != null){
+           task.setStatus(request.getStatus());
+       }
        if(request.getPriority() != null){
            task.setPriority(request.getPriority());
        }
