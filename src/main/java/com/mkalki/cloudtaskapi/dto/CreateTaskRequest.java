@@ -4,6 +4,8 @@ import com.mkalki.cloudtaskapi.enums.Priority;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
+
 public class CreateTaskRequest {
 
     @NotBlank(message="Title cannot be blank")
@@ -12,7 +14,7 @@ public class CreateTaskRequest {
 
     @Size(max=500, message = "Description cannot exceed 500 characters")
     private String description;
-
+    private LocalDate dueDate;
     private Priority priority;
 
     public CreateTaskRequest(){
@@ -31,5 +33,9 @@ public class CreateTaskRequest {
 
     public Priority getPriority(){
         return priority;
+    }
+
+    public LocalDate getDueDate(){
+        return dueDate;
     }
 }

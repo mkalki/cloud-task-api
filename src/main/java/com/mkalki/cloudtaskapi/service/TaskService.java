@@ -56,7 +56,8 @@ public class TaskService {
                 request.getTitle(),
                 request.getDescription(),
                 Status.TODO,
-                priority
+                priority,
+                request.getDueDate()
         );
 
         return taskRepository.save(task);
@@ -81,6 +82,9 @@ public class TaskService {
        }
        if(request.getPriority() != null){
            task.setPriority(request.getPriority());
+       }
+       if(request.getDueDate() != null){
+           task.setDueDate(request.getDueDate());
        }
 
        return taskRepository.save(task);

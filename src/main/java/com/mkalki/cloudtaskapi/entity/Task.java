@@ -5,6 +5,8 @@ import com.mkalki.cloudtaskapi.enums.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name="tasks")
 public class Task extends BaseEntity {
@@ -17,9 +19,10 @@ public class Task extends BaseEntity {
     @Column(nullable = false)
     private String title;
     private String description;
-
+    private LocalDate dueDate;
     @Enumerated(EnumType.STRING)
     private Status status = Status.TODO;
+
 
     @Enumerated(EnumType.STRING)
     private Priority priority;
@@ -29,13 +32,15 @@ public class Task extends BaseEntity {
                 String title,
                 String description,
                 Status status,
-                Priority priority ) {
+                Priority priority,
+                LocalDate dueDate) {
 
         this.id=id;
         this.title=title;
         this.description=description;
         this.status=status;
         this.priority=priority;
+        this.dueDate=dueDate;
     }
 
     public Long getId(){
@@ -58,7 +63,9 @@ public class Task extends BaseEntity {
         return priority;
     }
 
-
+    public LocalDate getDueDate(){
+        return dueDate;
+    }
 
     public void setTitle(String title){
         this.title=title;
@@ -74,6 +81,10 @@ public class Task extends BaseEntity {
 
     public void setPriority(Priority priority){
         this.priority=priority;
+    }
+
+    public void setDueDate(LocalDate dueDate){
+        this.dueDate=dueDate;
     }
 
     public Task(){

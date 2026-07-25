@@ -4,6 +4,8 @@ import com.mkalki.cloudtaskapi.enums.Priority;
 import com.mkalki.cloudtaskapi.enums.Status;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
+
 public class UpdateTaskRequest {
 
 
@@ -14,6 +16,7 @@ public class UpdateTaskRequest {
     private String description;
     private Status status ;
     private Priority priority;
+    private LocalDate dueDate;
 
     public UpdateTaskRequest() {
 
@@ -34,5 +37,9 @@ public class UpdateTaskRequest {
 
     public Priority getPriority() {
         return priority;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
     }
 }
