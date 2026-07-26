@@ -13,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 @RestController
 public class TaskController {
 
@@ -34,8 +36,11 @@ public class TaskController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String sort,
             @RequestParam(required = false) Status status,
-            @RequestParam(required = false) String title
-    ) {
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) LocalDate dueDate,
+            @RequestParam(required = false) LocalDate dueBefore,
+            @RequestParam(required = false) LocalDate dueAfter
+            ) {
 
         String[] sortParts = sort.split(",");
 
@@ -50,7 +55,11 @@ public class TaskController {
             sortObject=Sort.by(sortParts[0]).ascending();
         }
         Pageable pageable = PageRequest.of(page, size ,sortObject);
-        return taskService.getAllTasks(status,title, pageable);
+        return taskService.getTasks(status,title,
+                dueDate,
+                dueBefore,
+                dueAfter,
+                pageable);
     }
 
     @PostMapping("/tasks")

@@ -4,7 +4,33 @@ import com.mkalki.cloudtaskapi.entity.Task;
 import com.mkalki.cloudtaskapi.enums.Status;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
+
 public class TaskSpecification {
+
+    public static Specification<Task> byDueDate(LocalDate dueDate) {
+        return (root, criteriaQuery, criteriaBuilder) ->
+                criteriaBuilder.equal(
+                        root.get("dueDate"),
+                        dueDate
+                );
+    }
+
+    public static Specification<Task> byDueBefore(LocalDate dueBefore) {
+        return (root, criteriaQuery, criteriaBuilder) ->
+                criteriaBuilder.lessThan(
+                        root.get("dueDate"),
+                        dueBefore
+                );
+    }
+
+    public static Specification<Task> byDueAfter(LocalDate dueAfter) {
+        return (root, criteriaQuery, criteriaBuilder) ->
+                criteriaBuilder.greaterThan(
+                        root.get("dueDate"),
+                        dueAfter
+                );
+    }
 
     public static Specification<Task> byStatus(Status status) {
         return (root, criteriaQuery, criteriaBuilder) ->

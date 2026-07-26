@@ -1,5 +1,6 @@
 package com.mkalki.cloudtaskapi.handler;
 
+import com.mkalki.cloudtaskapi.exception.InvalidDateRangeException;
 import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,15 @@ import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(InvalidDateRangeException.class)
+    public ResponseEntity<String> handleInvalidDateRangeException(
+            InvalidDateRangeException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
 
     @ExceptionHandler(TaskNotFoundException.class)
     public ResponseEntity<String> handleTaskNotFoundException(

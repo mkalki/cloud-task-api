@@ -2,17 +2,19 @@ package com.mkalki.cloudtaskapi.service;
 
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
+import com.mkalki.cloudtaskapi.entity.Task;
 import com.mkalki.cloudtaskapi.enums.Priority;
 import com.mkalki.cloudtaskapi.enums.Status;
+import com.mkalki.cloudtaskapi.exception.InvalidDateRangeException;
 import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
-import com.mkalki.cloudtaskapi.entity.Task;
 import com.mkalki.cloudtaskapi.repository.TaskRepository;
 import com.mkalki.cloudtaskapi.specification.TaskSpecification;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -28,10 +30,18 @@ public class TaskService {
 
 
 
-    public Page<Task> getAllTasks(
+    public Page<Task> getTasks(
             Status status,
             String title,
+            LocalDate dueDate,
+            LocalDate dueBefore,
+            LocalDate dueAfter,
             Pageable pageable) {
+        if(dueAfter!=null && dueBefore!=null && dueAfter.isAfter(dueBefore)) {
+            throw new InvalidDateRangeException
+                    ("Invalid date range: dueAfter must be before dueBefore.");
+        }
+
         Specification<Task> spec = TaskSpecification.notDeleted();
 
        if(status != null ){
@@ -39,6 +49,15 @@ public class TaskService {
        }
        if(title != null && !title.isBlank()){
            spec =spec.and(TaskSpecification.titleContains(title));
+       }
+       if(dueDate != null){
+           spec = spec.and(TaskSpecification.byDueDate(dueDate));
+       }
+       if(dueBefore != null){
+           spec = spec.and(TaskSpecification.byDueBefore(dueBefore));
+       }
+       if(dueAfter != null){
+           spec = spec.and(TaskSpecification.byDueAfter(dueAfter));
        }
 
        return taskRepository.findAll(spec, pageable);
