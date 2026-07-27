@@ -41,8 +41,8 @@ public class TaskController {
             @RequestParam(required = false) LocalDate dueDate,
             @RequestParam(required = false) LocalDate dueBefore,
             @RequestParam(required = false) LocalDate dueAfter,
-            @RequestParam(required = false) Priority priority
-
+            @RequestParam(required = false) Priority priority,
+            @RequestParam(required = false) String search
             ) {
 
         String[] sortParts = sort.split(",");
@@ -63,6 +63,7 @@ public class TaskController {
                 dueBefore,
                 dueAfter,
                 priority,
+                search,
                 pageable);
     }
 

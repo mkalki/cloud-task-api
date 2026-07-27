@@ -3,6 +3,7 @@ package com.mkalki.cloudtaskapi.specification;
 import com.mkalki.cloudtaskapi.entity.Task;
 import com.mkalki.cloudtaskapi.enums.Priority;
 import com.mkalki.cloudtaskapi.enums.Status;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
@@ -58,5 +59,21 @@ public class TaskSpecification {
     public static Specification<Task> byPriority(Priority priority) {
         return (root, criteriaQuery, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("priority"), priority);
+    }
+
+    public static Specification<Task> bySearch(String search) {
+        return (root, criteriaQuery, criteriaBuilder) ->
+        {
+            String keyword = "%" + search.toLowerCase() + "%";
+            Predicate titlePredicate = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("title")),
+                        keyword
+                );
+            Predicate descriptionPredicate = criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("description")),
+                    keyword
+            );
+        return criteriaBuilder.or(titlePredicate, descriptionPredicate);
+    };
     }
 }
