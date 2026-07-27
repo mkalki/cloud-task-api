@@ -36,6 +36,8 @@ public class TaskService {
             LocalDate dueDate,
             LocalDate dueBefore,
             LocalDate dueAfter,
+            Priority priority,
+
             Pageable pageable) {
         if(dueAfter!=null && dueBefore!=null && dueAfter.isAfter(dueBefore)) {
             throw new InvalidDateRangeException
@@ -58,6 +60,9 @@ public class TaskService {
        }
        if(dueAfter != null){
            spec = spec.and(TaskSpecification.byDueAfter(dueAfter));
+       }
+       if(priority != null){
+           spec = spec.and(TaskSpecification.byPriority(priority));
        }
 
        return taskRepository.findAll(spec, pageable);

@@ -1,6 +1,7 @@
 package com.mkalki.cloudtaskapi.specification;
 
 import com.mkalki.cloudtaskapi.entity.Task;
+import com.mkalki.cloudtaskapi.enums.Priority;
 import com.mkalki.cloudtaskapi.enums.Status;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -52,5 +53,10 @@ public class TaskSpecification {
     public static Specification<Task> notDeleted(){
         return (root, criteriaQuery, criteriaBuilder) ->
             criteriaBuilder.isFalse(root.get("deleted"));
+    }
+
+    public static Specification<Task> byPriority(Priority priority) {
+        return (root, criteriaQuery, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("priority"), priority);
     }
 }

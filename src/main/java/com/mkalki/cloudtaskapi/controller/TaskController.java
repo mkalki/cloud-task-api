@@ -3,6 +3,7 @@ package com.mkalki.cloudtaskapi.controller;
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
 import com.mkalki.cloudtaskapi.entity.Task;
+import com.mkalki.cloudtaskapi.enums.Priority;
 import com.mkalki.cloudtaskapi.enums.Status;
 import com.mkalki.cloudtaskapi.service.TaskService;
 import jakarta.validation.Valid;
@@ -39,7 +40,9 @@ public class TaskController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) LocalDate dueDate,
             @RequestParam(required = false) LocalDate dueBefore,
-            @RequestParam(required = false) LocalDate dueAfter
+            @RequestParam(required = false) LocalDate dueAfter,
+            @RequestParam(required = false) Priority priority
+
             ) {
 
         String[] sortParts = sort.split(",");
@@ -59,6 +62,7 @@ public class TaskController {
                 dueDate,
                 dueBefore,
                 dueAfter,
+                priority,
                 pageable);
     }
 
