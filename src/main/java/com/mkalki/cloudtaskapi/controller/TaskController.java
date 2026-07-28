@@ -7,6 +7,7 @@ import com.mkalki.cloudtaskapi.enums.Priority;
 import com.mkalki.cloudtaskapi.enums.Status;
 import com.mkalki.cloudtaskapi.service.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,7 +40,8 @@ public class TaskController {
             @ApiResponse(responseCode = "404",description = "The requested task was not found.")
     })
     @GetMapping("/{id}")
-    public Task getTaskById(@PathVariable Long id) {
+    public Task getTaskById(@Parameter(description = "Unique identifier of the task.")
+            @PathVariable Long id) {
         return taskService.getTaskById(id);
     }
 
@@ -51,15 +53,33 @@ public class TaskController {
     })
     @GetMapping
     public Page<Task> getTasks(
+            @Parameter(description="Zero-based page index. Defaults to 0 if not specified.")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of tasks to return per page. Defaults to 10 if not specified.")
             @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Specifies the field and sort direction in the format field,direction, " +
+                    "for example id,asc or title,desc. " +
+                    "Supported fields include id, title, priority, status, and dueDate. " +
+                    "Defaults to id,asc if not specified." +
+                    " Use `asc` for ascending order and `desc` for descending order.")
             @RequestParam(defaultValue = "id,asc") String sort,
+            @Parameter(description = "Filters tasks by their status. Supported values are TODO, IN_PROGRESS, and COMPLETED. " +
+                            "If not specified, tasks of all statuses are returned.")
             @RequestParam(required = false) Status status,
+            @Parameter(description = "Filters tasks whose title matches the specified value. " +
+                    "If not specified, no title filter is applied.")
             @RequestParam(required = false) String title,
+            @Parameter(description = "Returns tasks that are due on the specified date.")
             @RequestParam(required = false) LocalDate dueDate,
+            @Parameter(description = "Returns tasks that are due before the specified date.")
             @RequestParam(required = false) LocalDate dueBefore,
+            @Parameter(description = "Returns tasks that are due after the specified date.")
             @RequestParam(required = false) LocalDate dueAfter,
+            @Parameter(description = "Filters tasks by priority. Supported values are LOW, MEDIUM and HIGH." +
+                    "If not specified, tasks of all priorities are returned")
             @RequestParam(required = false) Priority priority,
+            @Parameter(description = "Searches tasks by title or description." +
+                    "If not specified, all tasks are returned.")
             @RequestParam(required = false) String search
             ) {
 
@@ -104,7 +124,8 @@ public class TaskController {
             @ApiResponse(responseCode = "404",description = "The requested task was not found.")
     })
     @PutMapping("/{id}")
-    public Task updateTask( @PathVariable Long id,
+    public Task updateTask( @Parameter(description = "Unique identifier of the task.")
+                            @PathVariable Long id,
                             @Valid @RequestBody UpdateTaskRequest request){
         return taskService.updateTask(id,request);
     }
@@ -118,7 +139,8 @@ public class TaskController {
     })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteTask(@PathVariable Long id){
+    public void deleteTask(@Parameter(description = "Unique identifier of the task.")
+            @PathVariable Long id){
         taskService.deleteTask(id);
     }
 }
