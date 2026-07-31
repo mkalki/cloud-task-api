@@ -21,8 +21,6 @@ public class CreateTaskRequest {
 
     }
 
-
-
     public String getTitle(){
         return title;
     }

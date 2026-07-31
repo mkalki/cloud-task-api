@@ -2,6 +2,7 @@ package com.mkalki.cloudtaskapi.handler;
 
 import com.mkalki.cloudtaskapi.exception.InvalidDateRangeException;
 import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
+import com.mkalki.cloudtaskapi.exception.UsernameAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -48,5 +49,14 @@ public class GlobalExceptionHandler {
             }
             return ResponseEntity.badRequest().body(errors);
 
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<String> handleUsernameAlreadyExistsException(
+            UsernameAlreadyExistsException ex
+    ){
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ex.getMessage());
     }
 }
