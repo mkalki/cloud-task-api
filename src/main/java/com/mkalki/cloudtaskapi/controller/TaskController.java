@@ -1,8 +1,8 @@
 package com.mkalki.cloudtaskapi.controller;
 
 import com.mkalki.cloudtaskapi.dto.CreateTaskRequest;
+import com.mkalki.cloudtaskapi.dto.TaskResponse;
 import com.mkalki.cloudtaskapi.dto.UpdateTaskRequest;
-import com.mkalki.cloudtaskapi.entity.Task;
 import com.mkalki.cloudtaskapi.enums.Priority;
 import com.mkalki.cloudtaskapi.enums.Status;
 import com.mkalki.cloudtaskapi.service.TaskService;
@@ -40,9 +40,9 @@ public class TaskController {
             @ApiResponse(responseCode = "404",description = "The requested task was not found.")
     })
     @GetMapping("/{id}")
-    public Task getTaskById(@Parameter(description = "Unique identifier of the task.")
+    public TaskResponse getTaskById(@Parameter(description = "Unique identifier of the task.")
             @PathVariable Long id) {
-        return taskService.getTaskById(id);
+        return taskService.getTaskResponseById(id);
     }
 
     @Operation(summary="Retrieve tasks.",
@@ -52,7 +52,7 @@ public class TaskController {
             @ApiResponse(responseCode = "400",description = "The request contains invalid query parameters.")
     })
     @GetMapping
-    public Page<Task> getTasks(
+    public Page<TaskResponse> getTasks(
             @Parameter(description="Zero-based page index. Defaults to 0 if not specified.")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Number of tasks to return per page. Defaults to 10 if not specified.")
@@ -112,7 +112,7 @@ public class TaskController {
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Task createTask(@Valid @RequestBody CreateTaskRequest request){
+    public TaskResponse createTask(@Valid @RequestBody CreateTaskRequest request){
         return taskService.createTask(request);
     }
 
@@ -124,7 +124,7 @@ public class TaskController {
             @ApiResponse(responseCode = "404",description = "The requested task was not found.")
     })
     @PutMapping("/{id}")
-    public Task updateTask( @Parameter(description = "Unique identifier of the task.")
+    public TaskResponse updateTask( @Parameter(description = "Unique identifier of the task.")
                             @PathVariable Long id,
                             @Valid @RequestBody UpdateTaskRequest request){
         return taskService.updateTask(id,request);

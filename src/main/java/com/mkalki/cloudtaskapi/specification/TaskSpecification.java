@@ -61,6 +61,11 @@ public class TaskSpecification {
                 criteriaBuilder.equal(root.get("priority"), priority);
     }
 
+    public static Specification<Task> byOwnerId(Long ownerId) {
+        return (root, criteriaQuery, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("owner").get("id"), ownerId);
+    }
+
     public static Specification<Task> bySearch(String search) {
         return (root, criteriaQuery, criteriaBuilder) ->
         {

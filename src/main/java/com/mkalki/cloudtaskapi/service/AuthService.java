@@ -3,6 +3,7 @@ package com.mkalki.cloudtaskapi.service;
 import com.mkalki.cloudtaskapi.dto.LoginRequest;
 import com.mkalki.cloudtaskapi.dto.RegisterRequest;
 import com.mkalki.cloudtaskapi.entity.User;
+import com.mkalki.cloudtaskapi.enums.Role;
 import com.mkalki.cloudtaskapi.exception.UsernameAlreadyExistsException;
 import com.mkalki.cloudtaskapi.repository.UserRepository;
 import com.mkalki.cloudtaskapi.security.JwtService;
@@ -48,6 +49,7 @@ public class AuthService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.USER);
         userRepository.save(user);
     }
 }

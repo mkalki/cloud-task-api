@@ -23,17 +23,20 @@ public class Task extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Status status = Status.TODO;
 
-
     @Enumerated(EnumType.STRING)
     private Priority priority;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
 
     public Task(Long id,
                 String title,
                 String description,
-                Status status,
                 Priority priority,
-                LocalDate dueDate) {
+                LocalDate dueDate,
+                User owner) {
 
         this.id=id;
         this.title=title;
@@ -41,6 +44,7 @@ public class Task extends BaseEntity {
         this.status=status;
         this.priority=priority;
         this.dueDate=dueDate;
+        this.owner=owner;
     }
 
     public Long getId(){
@@ -67,6 +71,10 @@ public class Task extends BaseEntity {
         return dueDate;
     }
 
+    public User getOwner(){
+        return owner;
+    }
+
     public void setTitle(String title){
         this.title=title;
     }
@@ -85,6 +93,10 @@ public class Task extends BaseEntity {
 
     public void setDueDate(LocalDate dueDate){
         this.dueDate=dueDate;
+    }
+
+    public void setOwner(User owner){
+        this.owner=owner;
     }
 
     public Task(){
