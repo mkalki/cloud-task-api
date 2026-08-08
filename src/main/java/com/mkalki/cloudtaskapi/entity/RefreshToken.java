@@ -24,4 +24,32 @@ public class RefreshToken {
     @ManyToOne(fetch=FetchType.LAZY,optional = false)
     @JoinColumn(name = "user_id",nullable = false)
     private User user;
+
+    public boolean isRevoked() {
+        return revoked;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public void setTokenHash(String tokenHash) {
+        this.tokenHash = tokenHash;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public void setRevoked(boolean revoked) {
+        this.revoked = revoked;
+    }
 }

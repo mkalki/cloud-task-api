@@ -1,9 +1,6 @@
 package com.mkalki.cloudtaskapi.handler;
 
-import com.mkalki.cloudtaskapi.exception.InvalidDateRangeException;
-import com.mkalki.cloudtaskapi.exception.TaskAccessDeniedException;
-import com.mkalki.cloudtaskapi.exception.TaskNotFoundException;
-import com.mkalki.cloudtaskapi.exception.UsernameAlreadyExistsException;
+import com.mkalki.cloudtaskapi.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -66,6 +63,14 @@ public class GlobalExceptionHandler {
             TaskAccessDeniedException ex){
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<String> handleInvalidRefreshTokenException(
+            InvalidRefreshTokenException ex){
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(ex.getMessage());
     }
 }
