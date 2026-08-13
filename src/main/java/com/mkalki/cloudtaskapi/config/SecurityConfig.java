@@ -30,8 +30,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**","/swagger-ui/**","/v3/api-docs/**").permitAll()
 
                         .requestMatchers(HttpMethod.DELETE, "/tasks/**")
-                        .hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .authenticated()
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

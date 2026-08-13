@@ -29,7 +29,7 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    public TaskController(TaskService taskService){
+    public TaskController(TaskService taskService) {
         this.taskService = taskService;
     }
 
@@ -137,10 +137,13 @@ public class TaskController {
             @ApiResponse(responseCode = "400",description = "The request contains invalid or missing task data."),
             @ApiResponse(responseCode = "404",description = "The requested task was not found.")
     })
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTask(@Parameter(description = "Unique identifier of the task.")
             @PathVariable Long id){
         taskService.deleteTask(id);
     }
+
+
 }
