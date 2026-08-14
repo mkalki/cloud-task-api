@@ -1,5 +1,6 @@
 package com.mkalki.cloudtaskapi.config;
 
+import com.mkalki.cloudtaskapi.ratelimit.RateLimitFilter;
 import com.mkalki.cloudtaskapi.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,9 +18,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          RateLimitFilter rateLimitFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
@@ -31,6 +35,8 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.DELETE, "/tasks/**")
                         .authenticated()
+
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -39,6 +45,9 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
+                )
+                .addFilterAfter(rateLimitFilter,
+                        JwtAuthenticationFilter.class
                 );
 
 
