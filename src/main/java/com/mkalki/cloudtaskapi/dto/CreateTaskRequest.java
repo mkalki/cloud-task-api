@@ -36,4 +36,16 @@ public class CreateTaskRequest {
     public LocalDate getDueDate(){
         return dueDate;
     }
+
+    public CreateTaskRequest(String title,
+                             String description,
+                             LocalDate dueDate,
+                             Priority priority){
+        this.title = title;
+        this.description = description;
+        this.dueDate = dueDate;
+        this.priority = priority;
+    }
+
+
 }

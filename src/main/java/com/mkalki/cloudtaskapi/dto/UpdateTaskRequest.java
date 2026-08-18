@@ -42,4 +42,18 @@ public class UpdateTaskRequest {
     public LocalDate getDueDate() {
         return dueDate;
     }
+
+    public UpdateTaskRequest(
+            String title,
+            String description,
+            Status status,
+            Priority priority,
+            LocalDate dueDate
+    ) {
+        this.title = title;
+        this.description = description;
+        this.status = status;
+        this.priority = priority;
+        this.dueDate = dueDate;
+    }
 }
