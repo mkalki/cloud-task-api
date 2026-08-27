@@ -1,5 +1,6 @@
 package com.mkalki.cloudtaskapi.ratelimit;
 
+import com.mkalki.cloudtaskapi.config.IntegrationTestConfig;
 import io.github.bucket4j.Bucket;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
         "rate-limit.refill-tokens=2",
         "rate-limit.refill-duration-minutes=1"
 })
-public class RateLimitBucketManagerTest {
+public class RateLimitBucketManagerTest extends IntegrationTestConfig {
 
     @Autowired
     private RateLimitBucketManager bucketManager;

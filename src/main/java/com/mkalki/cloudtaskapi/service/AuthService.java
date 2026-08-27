@@ -103,6 +103,7 @@ public class AuthService {
         String accessToken = jwtService.generateToken(user);
 
         auditService.log(
+                user.getId(),
                 AuditAction.TOKEN_REFRESH,
                 AuditResourceType.SESSION,
                 null,
@@ -113,13 +114,17 @@ public class AuthService {
     }
 
     @Transactional
-    public void logout(RefreshTokenRequest request){
-        RefreshToken refreshToken=
+    public void logout(RefreshTokenRequest request) {
+
+        RefreshToken refreshToken =
                 refreshTokenService.getRefreshToken(request.getRefreshToken());
+
+        User user = refreshToken.getUser();
 
         refreshTokenService.revokeRefreshToken(refreshToken);
 
         auditService.log(
+                user.getId(),
                 AuditAction.USER_LOGOUT,
                 AuditResourceType.SESSION,
                 null,
