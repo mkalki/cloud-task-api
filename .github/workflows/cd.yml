@@ -25,5 +25,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ec2-user/cloud-task-api
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
             docker compose up -d --build
