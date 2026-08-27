@@ -24,23 +24,37 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 30m
+
           script: |
             set -e
-            
+
+            echo "Starting CloudTask deployment..."
+
             cd /home/ec2-user/cloud-task-api
+
+            echo "Updating application source..."
             git fetch origin
             git reset --hard origin/main
+
+            echo "Building and starting containers..."
             docker compose up -d --build
-            
-            for i in {1..12}; do
-              if curl -f http://localhost:8080/actuator/health; then
+
+            echo "Waiting for application health check..."
+
+            for i in {1..24}; do
+              if curl -fs http://localhost:8080/actuator/health; then
+                echo
                 echo "Application is healthy"
                 exit 0
               fi
-              
-              echo "Waiting for application to become healthy..."
+
+              echo "Attempt $i/24: Application is not ready yet..."
               sleep 5
             done
-            
+
             echo "Application failed health check"
+
+            docker compose ps
+            docker compose logs --tail=100 app
+
             exit 1
