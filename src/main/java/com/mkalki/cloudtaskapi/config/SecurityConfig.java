@@ -36,7 +36,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/actuator/health"
+                                "/actuator/health",
+                                "/actuator/prometheus"
                         ).permitAll()
 
                         .requestMatchers(HttpMethod.DELETE, "/tasks/**")
