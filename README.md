@@ -691,16 +691,13 @@ The exported Grafana dashboard is stored in:
 grafana/dashboards/cloudtask-dashboard.json
 ```
 
-Add the dashboard screenshot to the repository, for example:
-
-```text
-docs/images/cloudtask-grafana-dashboard.png
-```
-
 Then include it in this section:
 
 ```md
-![CloudTask Grafana Dashboard](docs/images/cloudtask-grafana-dashboard.png)
+### Grafana Dashboard
+![CloudTask Grafana Dashboard - Availability and Traffic](docs/images/cloudtask-grafana-dashboard1.png)
+
+![CloudTask Grafana Dashboard - JVM and Application Metrics](docs/images/cloudtask-grafana-dashboard2.png)
 ```
 
 ---
@@ -966,16 +963,9 @@ Deployment Success
 
 ## 🚀 Future Enhancements
 
-- Nginx reverse proxy
-- HTTPS / TLS
-- Custom domain configuration
-- EC2-hosted Prometheus and Grafana access hardening
-- Alerting and notifications
-- Additional custom Micrometer metrics
-- Redis-based distributed rate limiting
-- More advanced performance and load testing
-- Production-grade centralized logging
-- Distributed tracing if CloudTask evolves into multiple services
+- **v2: Redis-based priority task scheduler** — scheduled task execution (September 2026)
+- **Nginx + HTTPS** — reverse proxy, TLS, and domain configuration
+- **Advanced observability** — alerting and production dashboards
 
 ---
 
