@@ -691,14 +691,11 @@ The exported Grafana dashboard is stored in:
 grafana/dashboards/cloudtask-dashboard.json
 ```
 
-Then include it in this section:
-
-```md
 ### Grafana Dashboard
+
 ![CloudTask Grafana Dashboard - Availability and Traffic](docs/images/cloudtask-grafana-dashboard1.png)
 
 ![CloudTask Grafana Dashboard - JVM and Application Metrics](docs/images/cloudtask-grafana-dashboard2.png)
-```
 
 ---
 
