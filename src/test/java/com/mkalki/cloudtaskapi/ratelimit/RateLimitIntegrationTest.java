@@ -33,7 +33,7 @@ class RateLimitIntegrationTest extends IntegrationTestConfig {
             throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -44,7 +44,7 @@ class RateLimitIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -64,7 +64,7 @@ class RateLimitIntegrationTest extends IntegrationTestConfig {
         );
 
         mockMvc.perform(
-                get("/tasks")
+                get("/api/v1/tasks")
                         .header(
                                 "Authorization",
                                 "Bearer " + accessToken
@@ -72,7 +72,7 @@ class RateLimitIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isOk());
 
         mockMvc.perform(
-                get("/tasks")
+                get("/api/v1/tasks")
                         .header(
                                 "Authorization",
                                 "Bearer " + accessToken
@@ -80,7 +80,7 @@ class RateLimitIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isOk());
 
         mockMvc.perform(
-                        get("/tasks")
+                        get("/api/v1/tasks")
                                 .header(
                                         "Authorization",
                                         "Bearer " + accessToken

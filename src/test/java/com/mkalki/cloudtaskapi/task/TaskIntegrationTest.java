@@ -24,7 +24,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
     void authenticatedUserShouldCreateTask() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -35,7 +35,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -55,7 +55,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
         );
 
         mockMvc.perform(
-                post("/tasks")
+                post("/api/v1/tasks")
                         .header(
                                 "Authorization",
                                 "Bearer " + accessToken
@@ -74,7 +74,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register User A
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -86,7 +86,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login User A
         String userALoginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                             {
@@ -107,7 +107,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User A creates a task
         String taskResponse = mockMvc.perform(
-                        post("/tasks")
+                        post("/api/v1/tasks")
                                 .header(
                                         "Authorization",
                                         "Bearer " + userAAccessToken
@@ -131,7 +131,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register User B
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -143,7 +143,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login User B
         String userBLoginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                             {
@@ -164,7 +164,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User B tries to access User A's task
         mockMvc.perform(
-                get("/tasks/" + taskId.longValue())
+                get("/api/v1/tasks/" + taskId.longValue())
                         .header(
                                 "Authorization",
                                 "Bearer " + userBAccessToken
@@ -177,7 +177,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register User A
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -189,7 +189,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login User A
         String userALoginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -210,7 +210,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User A creates a task
         String taskResponse = mockMvc.perform(
-                        post("/tasks")
+                        post("/api/v1/tasks")
                                 .header(
                                         "Authorization",
                                         "Bearer " + userAAccessToken
@@ -234,7 +234,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register User B
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -246,7 +246,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login User B
         String userBLoginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -267,7 +267,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User B tries to update User A's task
         mockMvc.perform(
-                put("/tasks/" + taskId.longValue())
+                put("/api/v1/tasks/" + taskId.longValue())
                         .header(
                                 "Authorization",
                                 "Bearer " + userBAccessToken
@@ -286,7 +286,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register User A
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -298,7 +298,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login User A
         String userALoginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -319,7 +319,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User A creates a task
         String taskResponse = mockMvc.perform(
-                        post("/tasks")
+                        post("/api/v1/tasks")
                                 .header(
                                         "Authorization",
                                         "Bearer " + userAAccessToken
@@ -343,7 +343,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register User B
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -355,7 +355,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login User B
         String userBLoginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -376,7 +376,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User B tries to delete User A's task
         mockMvc.perform(
-                delete("/tasks/" + taskId.longValue())
+                delete("/api/v1/tasks/" + taskId.longValue())
                         .header(
                                 "Authorization",
                                 "Bearer " + userBAccessToken
@@ -389,7 +389,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register user
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -401,7 +401,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login user
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -422,7 +422,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Create task
         String taskResponse = mockMvc.perform(
-                        post("/tasks")
+                        post("/api/v1/tasks")
                                 .header(
                                         "Authorization",
                                         "Bearer " + accessToken
@@ -446,7 +446,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Owner updates own task
         mockMvc.perform(
-                        put("/tasks/" + taskId.longValue())
+                        put("/api/v1/tasks/" + taskId.longValue())
                                 .header(
                                         "Authorization",
                                         "Bearer " + accessToken
@@ -467,7 +467,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register user
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -479,7 +479,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login user
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -500,7 +500,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Create task
         String taskResponse = mockMvc.perform(
-                        post("/tasks")
+                        post("/api/v1/tasks")
                                 .header(
                                         "Authorization",
                                         "Bearer " + accessToken
@@ -524,7 +524,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Owner deletes own task
         mockMvc.perform(
-                delete("/tasks/" + taskId.longValue())
+                delete("/api/v1/tasks/" + taskId.longValue())
                         .header(
                                 "Authorization",
                                 "Bearer " + accessToken
@@ -533,7 +533,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Verify deleted task is no longer accessible
         mockMvc.perform(
-                get("/tasks/" + taskId.longValue())
+                get("/api/v1/tasks/" + taskId.longValue())
                         .header(
                                 "Authorization",
                                 "Bearer " + accessToken
@@ -546,7 +546,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register user
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -558,7 +558,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login user
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -579,7 +579,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Create task
         String taskResponse = mockMvc.perform(
-                        post("/tasks")
+                        post("/api/v1/tasks")
                                 .header(
                                         "Authorization",
                                         "Bearer " + accessToken
@@ -603,7 +603,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Owner retrieves own task
         mockMvc.perform(
-                        get("/tasks/" + taskId.longValue())
+                        get("/api/v1/tasks/" + taskId.longValue())
                                 .header(
                                         "Authorization",
                                         "Bearer " + accessToken
@@ -619,7 +619,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register User A
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -631,7 +631,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login User A
         String userALoginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -652,7 +652,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User A creates a task
         mockMvc.perform(
-                post("/tasks")
+                post("/api/v1/tasks")
                         .header(
                                 "Authorization",
                                 "Bearer " + userAAccessToken
@@ -667,7 +667,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Register User B
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -679,7 +679,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // Login User B
         String userBLoginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -700,7 +700,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User B creates a task
         mockMvc.perform(
-                post("/tasks")
+                post("/api/v1/tasks")
                         .header(
                                 "Authorization",
                                 "Bearer " + userBAccessToken
@@ -715,7 +715,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
 
         // User A retrieves the task list
         mockMvc.perform(
-                        get("/tasks")
+                        get("/api/v1/tasks")
                                 .header(
                                         "Authorization",
                                         "Bearer " + userAAccessToken
@@ -734,7 +734,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
     void unauthenticatedUserShouldNotAccessTasks() throws Exception {
 
         mockMvc.perform(
-                get("/tasks")
+                get("/api/v1/tasks")
         ).andExpect(status().isUnauthorized());
     }
 }

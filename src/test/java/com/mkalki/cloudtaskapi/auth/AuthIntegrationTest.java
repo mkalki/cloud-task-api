@@ -25,7 +25,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void registerShouldReturnCreated() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -40,7 +40,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void loginShouldReturnOk() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -51,7 +51,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         mockMvc.perform(
-                post("/auth/login")
+                post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -66,7 +66,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void loginWithInvalidPasswordShouldReturnUnauthorized() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -77,7 +77,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         mockMvc.perform(
-                post("/auth/login")
+                post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -92,7 +92,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void registerWithDuplicateUsernameShouldReturnConflict() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -103,7 +103,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -118,7 +118,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void refreshTokenShouldReturnOk() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -129,7 +129,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -149,7 +149,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         );
 
         mockMvc.perform(
-                        post("/auth/refresh")
+                        post("/api/v1/auth/refresh")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -166,7 +166,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void invalidRefreshTokenShouldReturnUnauthorized() throws Exception {
 
         mockMvc.perform(
-                post("/auth/refresh")
+                post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -180,7 +180,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void reusedRefreshTokenShouldReturnUnauthorized() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -191,7 +191,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -211,7 +211,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         );
 
         mockMvc.perform(
-                post("/auth/refresh")
+                post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -221,7 +221,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isOk());
 
         mockMvc.perform(
-                post("/auth/refresh")
+                post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -235,7 +235,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void accessingProtectedEndpointWithValidTokenShouldReturnOk() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -246,7 +246,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -266,7 +266,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         );
 
         mockMvc.perform(
-                get("/tasks")
+                get("/api/v1/tasks")
                         .header(
                                 "Authorization",
                                 "Bearer " + accessToken
@@ -279,7 +279,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
             throws Exception {
 
         mockMvc.perform(
-                get("/tasks")
+                get("/api/v1/tasks")
                         .header(
                                 "Authorization",
                                 "Bearer invalid-jwt-token"
@@ -291,7 +291,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
     void logoutShouldRevokeRefreshToken() throws Exception {
 
         mockMvc.perform(
-                post("/auth/register")
+                post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -302,7 +302,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isCreated());
 
         String loginResponse = mockMvc.perform(
-                        post("/auth/login")
+                        post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -322,7 +322,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         );
 
         mockMvc.perform(
-                post("/auth/logout")
+                post("/api/v1/auth/logout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -332,7 +332,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
         ).andExpect(status().isNoContent());
 
         mockMvc.perform(
-                post("/auth/refresh")
+                post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
