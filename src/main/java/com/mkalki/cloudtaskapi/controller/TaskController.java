@@ -24,7 +24,7 @@ import java.time.LocalDate;
 @Tag(name="Tasks",
         description="Operations for managing tasks")
 @RestController
-@RequestMapping("/tasks")
+@RequestMapping("/api/v1/tasks")
 public class TaskController {
 
     private final TaskService taskService;
