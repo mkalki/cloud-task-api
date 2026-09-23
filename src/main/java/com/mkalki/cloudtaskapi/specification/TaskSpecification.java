@@ -6,30 +6,30 @@ import com.mkalki.cloudtaskapi.enums.Status;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class TaskSpecification {
 
-    public static Specification<Task> byDueDate(LocalDate dueDate) {
+    public static Specification<Task> byDueAt(LocalDateTime dueAt) {
         return (root, criteriaQuery, criteriaBuilder) ->
                 criteriaBuilder.equal(
-                        root.get("dueDate"),
-                        dueDate
+                        root.get("dueAt"),
+                        dueAt
                 );
     }
 
-    public static Specification<Task> byDueBefore(LocalDate dueBefore) {
+    public static Specification<Task> byDueBefore(LocalDateTime dueBefore) {
         return (root, criteriaQuery, criteriaBuilder) ->
                 criteriaBuilder.lessThan(
-                        root.get("dueDate"),
+                        root.get("dueAt"),
                         dueBefore
                 );
     }
 
-    public static Specification<Task> byDueAfter(LocalDate dueAfter) {
+    public static Specification<Task> byDueAfter(LocalDateTime dueAfter) {
         return (root, criteriaQuery, criteriaBuilder) ->
                 criteriaBuilder.greaterThan(
-                        root.get("dueDate"),
+                        root.get("dueAt"),
                         dueAfter
                 );
     }

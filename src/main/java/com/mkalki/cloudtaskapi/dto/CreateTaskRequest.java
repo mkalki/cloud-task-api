@@ -4,7 +4,7 @@ import com.mkalki.cloudtaskapi.enums.Priority;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class CreateTaskRequest {
 
@@ -14,7 +14,7 @@ public class CreateTaskRequest {
 
     @Size(max=500, message = "Description cannot exceed 500 characters")
     private String description;
-    private LocalDate dueDate;
+    private LocalDateTime dueAt;
     private Priority priority;
 
     public CreateTaskRequest(){
@@ -33,17 +33,17 @@ public class CreateTaskRequest {
         return priority;
     }
 
-    public LocalDate getDueDate(){
-        return dueDate;
+    public LocalDateTime getDueAt(){
+        return dueAt;
     }
 
     public CreateTaskRequest(String title,
                              String description,
-                             LocalDate dueDate,
+                             LocalDateTime dueAt,
                              Priority priority){
         this.title = title;
         this.description = description;
-        this.dueDate = dueDate;
+        this.dueAt = dueAt;
         this.priority = priority;
     }
 

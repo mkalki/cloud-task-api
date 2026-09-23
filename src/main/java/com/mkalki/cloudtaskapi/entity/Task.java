@@ -5,7 +5,7 @@ import com.mkalki.cloudtaskapi.enums.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="tasks")
@@ -19,7 +19,7 @@ public class Task extends BaseEntity {
     @Column(nullable = false)
     private String title;
     private String description;
-    private LocalDate dueDate;
+    private LocalDateTime dueAt;
     @Enumerated(EnumType.STRING)
     private Status status = Status.TODO;
 
@@ -35,15 +35,14 @@ public class Task extends BaseEntity {
                 String title,
                 String description,
                 Priority priority,
-                LocalDate dueDate,
+                LocalDateTime dueAt,
                 User owner) {
 
         this.id=id;
         this.title=title;
         this.description=description;
-        this.status=status;
         this.priority=priority;
-        this.dueDate=dueDate;
+        this.dueAt=dueAt;
         this.owner=owner;
     }
 
@@ -67,8 +66,8 @@ public class Task extends BaseEntity {
         return priority;
     }
 
-    public LocalDate getDueDate(){
-        return dueDate;
+    public LocalDateTime getDueAt(){
+        return dueAt;
     }
 
     public User getOwner(){
@@ -91,8 +90,8 @@ public class Task extends BaseEntity {
         this.priority=priority;
     }
 
-    public void setDueDate(LocalDate dueDate){
-        this.dueDate=dueDate;
+    public void setDueAt(LocalDateTime dueAt){
+        this.dueAt=dueAt;
     }
 
     public void setOwner(User owner){

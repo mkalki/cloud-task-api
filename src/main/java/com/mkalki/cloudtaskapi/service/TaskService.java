@@ -24,7 +24,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -54,9 +53,9 @@ public class TaskService {
     public Page<TaskResponse> getTasks(
             Status status,
             String title,
-            LocalDate dueDate,
-            LocalDate dueBefore,
-            LocalDate dueAfter,
+            LocalDateTime dueAt,
+            LocalDateTime dueBefore,
+            LocalDateTime dueAfter,
             Priority priority,
             String search,
             Pageable pageable) {
@@ -77,8 +76,8 @@ public class TaskService {
        if(title != null && !title.isBlank()){
            spec =spec.and(TaskSpecification.titleContains(title));
        }
-       if(dueDate != null){
-           spec = spec.and(TaskSpecification.byDueDate(dueDate));
+       if(dueAt != null){
+           spec = spec.and(TaskSpecification.byDueAt(dueAt));
        }
        if(dueBefore != null){
            spec = spec.and(TaskSpecification.byDueBefore(dueBefore));
@@ -111,7 +110,7 @@ public class TaskService {
                 request.getTitle(),
                 request.getDescription(),
                 priority,
-                request.getDueDate(),
+                request.getDueAt(),
                 currentUser
         );
         Task savedTask = taskRepository.save(task);
@@ -188,17 +187,17 @@ public class TaskService {
 
            task.setPriority(request.getPriority());
        }
-       if(request.getDueDate() != null &&
-                !request.getDueDate().equals(task.getDueDate())){
+       if(request.getDueAt() != null &&
+                !request.getDueAt().equals(task.getDueAt())){
 
-           ObjectNode dueDateChange = objectMapper.createObjectNode();
-           dueDateChange.put("old", task.getDueDate() ==null
-                   ? null : task.getDueDate().toString());
-           dueDateChange.put("new", request.getDueDate().toString());
+           ObjectNode dueAtChange = objectMapper.createObjectNode();
+           dueAtChange.put("old", task.getDueAt() ==null
+                   ? null : task.getDueAt().toString());
+           dueAtChange.put("new", request.getDueAt().toString());
 
-           changes.set("dueDate", dueDateChange);
+           changes.set("dueAt", dueAtChange);
 
-           task.setDueDate(request.getDueDate());
+           task.setDueAt(request.getDueAt());
        }
 
         if(changes.isEmpty()) {

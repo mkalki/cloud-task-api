@@ -34,7 +34,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -110,7 +110,7 @@ public class TaskServiceTest {
         CreateTaskRequest request = new CreateTaskRequest(
                 "Learn Unit Testing",
                 "learn Mockito",
-                LocalDate.of(2026, 8 ,25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 Priority.HIGH
         );
 
@@ -119,7 +119,7 @@ public class TaskServiceTest {
                 "Learn Unit Testing",
                 "learn Mockito",
                 Priority.HIGH,
-                LocalDate.of(2026,8,25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 user
         );
 
@@ -160,7 +160,7 @@ public class TaskServiceTest {
         assertEquals("Learn Unit Testing", capturedTask.getTitle());
         assertEquals("learn Mockito", capturedTask.getDescription());
         assertEquals(Priority.HIGH, capturedTask.getPriority());
-        assertEquals(LocalDate.of(2026, 8, 25), capturedTask.getDueDate());
+        assertEquals(LocalDateTime.of(2026, 8, 25, 18, 0), capturedTask.getDueAt());
         assertSame(user, capturedTask.getOwner());
     }
 
@@ -181,7 +181,7 @@ public class TaskServiceTest {
         CreateTaskRequest request = new CreateTaskRequest(
                 "Learn Unit Testing",
                 "learn Mockito",
-                LocalDate.of(2026, 8 ,25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 null
         );
 
@@ -190,7 +190,7 @@ public class TaskServiceTest {
                 "Learn Unit Testing",
                 "learn Mockito",
                 Priority.LOW,
-                LocalDate.of(2026, 8,25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 null
         );
 
@@ -236,7 +236,7 @@ public class TaskServiceTest {
         CreateTaskRequest request = new CreateTaskRequest(
                 "Learn Unit Testing",
                 "learn Mockito",
-                LocalDate.of(2026, 8 ,25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 Priority.HIGH
         );
 
@@ -267,7 +267,7 @@ public class TaskServiceTest {
                 "Learn Unit Testing",
                 "learn Mockito",
                 Priority.HIGH,
-                LocalDate.of(2026, 8 ,25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 user
         );
 
@@ -323,7 +323,7 @@ public class TaskServiceTest {
                 "Learn Unit Testing",
                 "learn Mockito",
                 Priority.HIGH,
-                LocalDate.of(2026, 8 ,25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 owner
         );
         when(taskRepository.findByIdAndDeletedFalse(100L))
@@ -362,7 +362,7 @@ public class TaskServiceTest {
                 "Learn Unit Testing",
                 "learn Mockito",
                 Priority.HIGH,
-                LocalDate.of(2026, 8 ,25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 owner
         );
 
@@ -415,7 +415,7 @@ public class TaskServiceTest {
                 "Old Title",
                 "Description",
                 Priority.HIGH,
-                LocalDate.of(2026, 8, 25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 user
         );
 
@@ -497,7 +497,7 @@ public class TaskServiceTest {
                 "Existing Title",
                 "Description",
                 Priority.HIGH,
-                LocalDate.of(2026, 8, 25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 user
         );
 
@@ -564,7 +564,7 @@ public class TaskServiceTest {
                 "Old Title",
                 "Description",
                 Priority.HIGH,
-                LocalDate.of(2026, 8, 25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 owner
         );
 
@@ -635,7 +635,7 @@ public class TaskServiceTest {
                 "Task to Delete",
                 "Description",
                 Priority.HIGH,
-                LocalDate.of(2026, 8, 25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 user
         );
 
@@ -684,7 +684,7 @@ public class TaskServiceTest {
                 "Protected Task",
                 "Description",
                 Priority.HIGH,
-                LocalDate.of(2026, 8, 25),
+                LocalDateTime.of(2026, 8, 25, 18, 0),
                 owner
         );
 
@@ -747,8 +747,8 @@ public class TaskServiceTest {
     @Test
     void getTasks_shouldThrowException_whenDateRangeIsInvalid() {
 
-        LocalDate dueAfter = LocalDate.of(2026, 8, 30);
-        LocalDate dueBefore = LocalDate.of(2026, 8, 20);
+        LocalDateTime dueBefore = LocalDateTime.of(2026, 8, 25, 18, 0);
+        LocalDateTime dueAfter = LocalDateTime.of(2026, 8, 25, 19, 0);
 
         Pageable pageable = PageRequest.of(0, 10);
 

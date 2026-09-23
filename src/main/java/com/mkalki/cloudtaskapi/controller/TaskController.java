@@ -19,7 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Tag(name="Tasks",
         description="Operations for managing tasks")
@@ -59,7 +59,7 @@ public class TaskController {
             @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "Specifies the field and sort direction in the format field,direction, " +
                     "for example id,asc or title,desc. " +
-                    "Supported fields include id, title, priority, status, and dueDate. " +
+                    "Supported fields include id, title, priority, status, and dueAt. " +
                     "Defaults to id,asc if not specified." +
                     " Use `asc` for ascending order and `desc` for descending order.")
             @RequestParam(defaultValue = "id,asc") String sort,
@@ -70,11 +70,11 @@ public class TaskController {
                     "If not specified, no title filter is applied.")
             @RequestParam(required = false) String title,
             @Parameter(description = "Returns tasks that are due on the specified date.")
-            @RequestParam(required = false) LocalDate dueDate,
+            @RequestParam(required = false) LocalDateTime dueAt,
             @Parameter(description = "Returns tasks that are due before the specified date.")
-            @RequestParam(required = false) LocalDate dueBefore,
+            @RequestParam(required = false) LocalDateTime dueBefore,
             @Parameter(description = "Returns tasks that are due after the specified date.")
-            @RequestParam(required = false) LocalDate dueAfter,
+            @RequestParam(required = false) LocalDateTime dueAfter,
             @Parameter(description = "Filters tasks by priority. Supported values are LOW, MEDIUM and HIGH." +
                     "If not specified, tasks of all priorities are returned")
             @RequestParam(required = false) Priority priority,
@@ -97,7 +97,7 @@ public class TaskController {
         }
         Pageable pageable = PageRequest.of(page, size ,sortObject);
         return taskService.getTasks(status,title,
-                dueDate,
+                dueAt,
                 dueBefore,
                 dueAfter,
                 priority,
