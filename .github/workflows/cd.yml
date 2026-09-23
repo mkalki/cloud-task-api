@@ -1,60 +1,62 @@
-name: CloudTask CD
+- name: Deploy to EC2
+  uses: appleboy/ssh-action@v1.2.0
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ec2-user
+    key: ${{ secrets.EC2_SSH_KEY }}
+    command_timeout: 30m
 
-on:
-  workflow_run:
-    workflows:
-      - CloudTask CI
-    types:
-      - completed
+    script: |
+      set -e
 
-jobs:
-  deploy:
-    if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main'
+      cd /home/ec2-user/cloud-task-api
 
-    runs-on: ubuntu-latest
+      git fetch origin
+      git reset --hard origin/main
 
-    steps:
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          command_timeout: 30m
+      echo "Pulling base images..."
+      for attempt in 1 2 3; do
+        if docker pull eclipse-temurin:21-jdk &&
+           docker pull eclipse-temurin:21-jre; then
+          break
+        fi
 
-          script: |
-            set -e
+        if [ "$attempt" -eq 3 ]; then
+          exit 1
+        fi
 
-            echo "Starting CloudTask deployment..."
+        sleep 15
+      done
 
-            cd /home/ec2-user/cloud-task-api
+      echo "Building and starting containers..."
+      for attempt in 1 2 3; do
+        if timeout 20m docker compose build &&
+           docker compose up -d; then
+          break
+        fi
 
-            echo "Updating application source..."
-            git fetch origin
-            git reset --hard origin/main
+        if [ "$attempt" -eq 3 ]; then
+          docker compose ps
+          docker compose logs --tail=100 app || true
+          exit 1
+        fi
 
-            echo "Building and starting containers..."
-            docker compose up -d --build
+        sleep 20
+      done
 
-            echo "Waiting for application health check..."
+      echo "Waiting for application health check..."
+      for i in {1..24}; do
+        if curl -fsS http://localhost:8080/actuator/health; then
+          echo
+          echo "Application is healthy"
+          exit 0
+        fi
 
-            for i in {1..24}; do
-              if curl -fs http://localhost:8080/actuator/health; then
-                echo
-                echo "Application is healthy"
-                exit 0
-              fi
+        echo "Attempt $i/24: Application is not ready yet..."
+        sleep 5
+      done
 
-              echo "Attempt $i/24: Application is not ready yet..."
-              sleep 5
-            done
-
-            echo "Application failed health check"
-
-            docker compose ps
-            docker compose logs --tail=100 app
-
-            exit 1
+      echo "Application failed health check"
+      docker compose ps
+      docker compose logs --tail=100 app || true
+      exit 1
