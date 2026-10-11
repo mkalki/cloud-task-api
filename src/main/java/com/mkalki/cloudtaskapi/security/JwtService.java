@@ -3,6 +3,7 @@ package com.mkalki.cloudtaskapi.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,17 @@ public class JwtService {
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
+
+    @PostConstruct
+    public void validateSecret() {
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < 32) {
+            throw new IllegalStateException(
+                "JWT secret must be at least 256 bits (32 bytes). Current length: " 
+                + secretBytes.length + " bytes"
+            );
+        }
+    }
 
     private SecretKey getSignInKey() {
 

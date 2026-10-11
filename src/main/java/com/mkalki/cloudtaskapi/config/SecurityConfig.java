@@ -40,7 +40,7 @@ public class SecurityConfig {
                                 "/actuator/prometheus"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.DELETE, "/tasks/**")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tasks/**")
                         .authenticated()
 
                         .anyRequest().authenticated()
