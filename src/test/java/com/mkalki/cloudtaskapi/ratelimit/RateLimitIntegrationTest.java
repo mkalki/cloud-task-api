@@ -38,7 +38,7 @@ class RateLimitIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "rate-limit-integration-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -49,7 +49,7 @@ class RateLimitIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                 {
                                   "username": "rate-limit-integration-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
                 )

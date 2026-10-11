@@ -30,7 +30,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "integration-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -45,7 +45,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "login-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -56,7 +56,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "login-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isOk());
@@ -71,7 +71,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "invalid-login-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -82,7 +82,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "invalid-login-user",
-                                  "password": "wrong-password"
+                                  "password": "WrongPass123"
                                 }
                                 """)
         ).andExpect(status().isUnauthorized());
@@ -97,7 +97,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "duplicate-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -108,7 +108,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "duplicate-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isConflict());
@@ -123,7 +123,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "refresh-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -134,7 +134,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                 {
                                   "username": "refresh-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
                 )
@@ -185,7 +185,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "refresh-reuse-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -196,7 +196,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                 {
                                   "username": "refresh-reuse-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
                 )
@@ -240,7 +240,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "jwt-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -251,7 +251,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                 {
                                   "username": "jwt-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
                 )
@@ -296,7 +296,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "logout-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -307,7 +307,7 @@ class AuthIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                 {
                                   "username": "logout-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
                 )

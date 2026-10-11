@@ -14,10 +14,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
+
+    private static final List<String> EXCLUDED_PATHS = List.of(
+            "/api/v1/auth/",
+            "/swagger-ui/",
+            "/v3/api-docs/",
+            "/actuator/"
+    );
 
     private final RateLimitBucketManager bucketManager;
     private final ObjectMapper objectMapper;
@@ -73,13 +81,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-
         String path = request.getServletPath();
-
-        return path.startsWith("/auth/")
-                || path.startsWith("/swagger-ui/")
-                || path.startsWith("/v3/api-docs/");
+        return EXCLUDED_PATHS.stream().anyMatch(path::startsWith);
     }
-
-
 }

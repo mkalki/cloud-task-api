@@ -29,7 +29,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                                 {
                                   "username": "task-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
         ).andExpect(status().isCreated());
@@ -40,7 +40,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                 {
                                   "username": "task-test-user",
-                                  "password": "password123"
+                                  "password": "Password123"
                                 }
                                 """)
                 )
@@ -79,7 +79,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "task-owner-user",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -91,7 +91,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                             {
                               "username": "task-owner-user",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
                 )
@@ -136,7 +136,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "another-task-user",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -148,7 +148,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                             {
                               "username": "another-task-user",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
                 )
@@ -182,7 +182,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "update-owner-user",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -194,7 +194,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "update-owner-user",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
@@ -239,7 +239,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "update-another-user",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -251,7 +251,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "update-another-user",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
@@ -291,7 +291,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "delete-owner-user",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -303,7 +303,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "delete-owner-user",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
@@ -348,7 +348,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "delete-another-user",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -360,7 +360,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "delete-another-user",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
@@ -394,7 +394,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "task-update-owner",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -406,7 +406,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "task-update-owner",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
@@ -472,7 +472,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "task-delete-owner",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -484,7 +484,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "task-delete-owner",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
@@ -551,7 +551,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "task-get-owner",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -563,7 +563,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "task-get-owner",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
@@ -624,7 +624,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "task-list-user-a",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -636,7 +636,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "task-list-user-a",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
@@ -672,7 +672,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                         .content("""
                             {
                               "username": "task-list-user-b",
-                              "password": "password123"
+                              "password": "Password123"
                             }
                             """)
         ).andExpect(status().isCreated());
@@ -684,7 +684,7 @@ class TaskIntegrationTest extends IntegrationTestConfig {
                                 .content("""
                                     {
                                       "username": "task-list-user-b",
-                                      "password": "password123"
+                                      "password": "Password123"
                                     }
                                     """)
                 )
