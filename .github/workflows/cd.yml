@@ -33,6 +33,11 @@ jobs:
             git fetch origin
             git reset --hard origin/main
 
+            echo "Cleaning up disk space on EC2..."
+            docker system prune -af --volumes || true
+            docker image prune -af || true
+            sudo rm -rf /tmp/* || true
+
             echo "Pulling base images..."
             for attempt in 1 2 3; do
               if docker pull eclipse-temurin:21-jdk &&
@@ -42,6 +47,8 @@ jobs:
 
               if [ "$attempt" -eq 3 ]; then
                 echo "Failed to pull base images"
+                echo "Available disk space:"
+                df -h /
                 exit 1
               fi
 
