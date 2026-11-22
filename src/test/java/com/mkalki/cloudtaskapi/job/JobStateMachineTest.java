@@ -24,6 +24,11 @@ import static com.mkalki.cloudtaskapi.job.JobStatus.SUCCEEDED;
 import static com.mkalki.cloudtaskapi.job.JobStatus.UPSTREAM_FAILED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 /** Checks every one of the 8 x 8 status pairs against the table in PRD section 8.1. */
 class JobStateMachineTest {
@@ -48,7 +53,8 @@ class JobStateMachineTest {
             List.of(UPSTREAM_FAILED, BLOCKED)
     );
 
-    private final JobStateMachine stateMachine = new JobStateMachine();
+    private final JobRepository repository = mock(JobRepository.class);
+    private final JobStateMachine stateMachine = new JobStateMachine(repository);
 
     static Stream<List<JobStatus>> legalPairs() {
         return LEGAL.stream();
@@ -156,6 +162,40 @@ class JobStateMachineTest {
         assertThat(publicSetter)
                 .as("Only JobStateMachine may change status, so Job.setStatus must not be public")
                 .isFalse();
+    }
+
+    @Test
+    void transitionIfRunsOneConditionalUpdateAndSetsFinishedAtForTerminalStatuses() {
+        UUID id = UUID.randomUUID();
+        when(repository.updateStatusIfCurrent(id, RUNNING, CANCELLED, T1, T1)).thenReturn(1);
+
+        assertThat(stateMachine.transitionIf(id, RUNNING, CANCELLED, T1)).isTrue();
+
+        verify(repository).updateStatusIfCurrent(id, RUNNING, CANCELLED, T1, T1);
+    }
+
+    @Test
+    void transitionIfClearsFinishedAtForNonTerminalStatuses() {
+        UUID id = UUID.randomUUID();
+        when(repository.updateStatusIfCurrent(id, DEAD, PENDING, T1, null)).thenReturn(1);
+
+        assertThat(stateMachine.transitionIf(id, DEAD, PENDING, T1)).isTrue();
+    }
+
+    @Test
+    void transitionIfReturnsFalseWhenAnotherWriterChangedTheStatusFirst() {
+        UUID id = UUID.randomUUID();
+        when(repository.updateStatusIfCurrent(any(), any(), any(), any(), any())).thenReturn(0);
+
+        assertThat(stateMachine.transitionIf(id, QUEUED, CANCELLED, T1)).isFalse();
+    }
+
+    @Test
+    void transitionIfRejectsIllegalMovesWithoutTouchingTheDatabase() {
+        assertThatThrownBy(() -> stateMachine.transitionIf(UUID.randomUUID(), SUCCEEDED, CANCELLED, T1))
+                .isInstanceOf(IllegalJobTransitionException.class);
+
+        verifyNoInteractions(repository);
     }
 
     private static Job jobIn(JobStatus status) {

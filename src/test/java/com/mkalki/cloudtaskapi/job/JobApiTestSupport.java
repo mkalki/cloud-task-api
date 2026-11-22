@@ -92,6 +92,19 @@ public abstract class JobApiTestSupport extends IntegrationTestConfig {
                 "select count(*) from jobs where owner_id = ?", Long.class, userIdOf(token));
     }
 
+    /**
+     * True while some other database session is blocked on a lock. Tests use it to know that
+     * a request has reached a statement that waits for an uncommitted transaction.
+     */
+    protected boolean someSessionIsWaitingOnALock() {
+        Long waiting = jdbc.queryForObject("""
+                select count(*) from pg_stat_activity
+                 where wait_event_type = 'Lock'
+                   and pid <> pg_backend_pid()
+                """, Long.class);
+        return waiting != null && waiting > 0;
+    }
+
     /** The JWT subject is the username, so it is the middle part of the token, base64url-encoded. */
     private String usernameOf(String token) {
         String payload = new String(Base64.getUrlDecoder().decode(token.split("\\.")[1]));

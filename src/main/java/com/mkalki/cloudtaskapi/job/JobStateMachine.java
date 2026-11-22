@@ -8,6 +8,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import static com.mkalki.cloudtaskapi.job.JobStatus.BLOCKED;
 import static com.mkalki.cloudtaskapi.job.JobStatus.CANCELLED;
@@ -20,8 +21,11 @@ import static com.mkalki.cloudtaskapi.job.JobStatus.UPSTREAM_FAILED;
 
 /**
  * The only class that changes {@link Job#getStatus()}. Legal moves follow PRD section 8.1.
- * It changes the in-memory entity. Later features that need atomic cross-process
- * updates guard them with conditional SQL and still check {@link #canTransition} first.
+ *
+ * <p>Two ways in: {@link #transition} changes an in-memory entity (saved later with its
+ * {@code @Version} check), and {@link #transitionIf} runs one conditional SQL update for
+ * changes that can race with other processes (cancel now, workers and scheduler later).
+ * Both bump {@code version}, so the two styles fence each other.
  */
 @Component
 public class JobStateMachine {
@@ -43,6 +47,12 @@ public class JobStateMachine {
         LEGAL.put(UPSTREAM_FAILED, EnumSet.of(BLOCKED));
         LEGAL.put(SUCCEEDED, EnumSet.noneOf(JobStatus.class));
         LEGAL.put(CANCELLED, EnumSet.noneOf(JobStatus.class));
+    }
+
+    private final JobRepository jobRepository;
+
+    public JobStateMachine(JobRepository jobRepository) {
+        this.jobRepository = jobRepository;
     }
 
     public boolean canTransition(JobStatus from, JobStatus to) {
@@ -67,5 +77,21 @@ public class JobStateMachine {
         } else if (from.isTerminal()) {
             job.setFinishedAt(null);
         }
+    }
+
+    /**
+     * Moves job {@code id} from {@code from} to {@code to} in the database, but only if it is
+     * still in {@code from}. Returns false when another writer changed the status first; the
+     * caller must re-read the job and decide again. Throws if the move itself is illegal.
+     *
+     * <p>{@code finishedAt} is set on entering a terminal status and cleared otherwise.
+     * Clearing is safe because a non-terminal job never has a {@code finishedAt}.
+     */
+    public boolean transitionIf(UUID id, JobStatus from, JobStatus to, Instant now) {
+        if (!canTransition(from, to)) {
+            throw new IllegalJobTransitionException(from, to);
+        }
+        Instant finishedAt = to.isTerminal() ? now : null;
+        return jobRepository.updateStatusIfCurrent(id, from, to, now, finishedAt) == 1;
     }
 }

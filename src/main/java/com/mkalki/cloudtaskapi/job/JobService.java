@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,8 @@ public class JobService {
 
     static final int MAX_PAGE_SIZE = 100;
     static final int MAX_IDEMPOTENCY_KEY_LENGTH = 255;
+    /** How often cancel re-reads and retries when another writer changes the status first. */
+    static final int MAX_CANCEL_ATTEMPTS = 3;
     private static final Set<String> SORTABLE_FIELDS =
             Set.of("createdAt", "updatedAt", "runAt", "priority", "status", "type");
 
@@ -136,32 +139,41 @@ public class JobService {
     /**
      * PostgreSQL is authoritative: this only changes the database row. Removing the job
      * from Redis queues is added in F2. Cancelling an already cancelled job is a no-op.
+     *
+     * <p>The change is one conditional update ({@code WHERE status = <what we read>}), so a
+     * worker that finishes the job between our read and our update wins: the update matches
+     * no row, we read again, see SUCCEEDED and return 409. If another cancel won, we return 200.
      */
     @Transactional
     public JobResponse cancel(UUID id) {
-        Job job = findOwnedJob(id);
+        for (int i = 0; i < MAX_CANCEL_ATTEMPTS; i++) {
+            Job job = findOwnedJob(id);
+            JobStatus previous = job.getStatus();
 
-        if (job.getStatus() == JobStatus.CANCELLED) {
-            return mapper.toResponse(job);
+            if (previous == JobStatus.CANCELLED) {
+                return mapper.toResponse(job);
+            }
+            if (previous.isTerminal()) {
+                throw new JobNotCancellableException(
+                        "Job is already " + previous + " and cannot be cancelled");
+            }
+
+            if (stateMachine.transitionIf(id, previous, JobStatus.CANCELLED, clock.instant())) {
+                Job cancelled = findOwnedJob(id);
+
+                ObjectNode changes = objectMapper.createObjectNode();
+                changes.put("jobId", cancelled.getId().toString());
+                changes.put("type", cancelled.getType());
+                changes.put("previousStatus", previous.name());
+                auditService.log(AuditAction.JOB_CANCELLED, AuditResourceType.JOB, null, changes);
+
+                log.info("job cancelled jobId={} type={} attempt={} previousStatus={}",
+                        cancelled.getId(), cancelled.getType(), cancelled.getAttempt(), previous);
+                return mapper.toResponse(cancelled);
+            }
+            // Another writer changed the status after our read. Loop: read again and decide.
         }
-        if (job.getStatus().isTerminal()) {
-            throw new JobNotCancellableException(
-                    "Job is already " + job.getStatus() + " and cannot be cancelled");
-        }
-
-        JobStatus previous = job.getStatus();
-        stateMachine.transition(job, JobStatus.CANCELLED, clock.instant());
-        Job saved = jobRepository.save(job);
-
-        ObjectNode changes = objectMapper.createObjectNode();
-        changes.put("jobId", saved.getId().toString());
-        changes.put("type", saved.getType());
-        changes.put("previousStatus", previous.name());
-        auditService.log(AuditAction.JOB_CANCELLED, AuditResourceType.JOB, null, changes);
-
-        log.info("job cancelled jobId={} type={} previousStatus={}",
-                saved.getId(), saved.getType(), previous);
-        return mapper.toResponse(saved);
+        throw new ObjectOptimisticLockingFailureException(Job.class, id);
     }
 
     private SubmitResult create(Long userId, String key, ValidatedJob validated) {
