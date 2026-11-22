@@ -27,10 +27,12 @@ class ActiveJobLockTest {
 
     @Test
     void idsThatCollideWhenFoldedToAnIntStayDistinct() {
-        // Long.hashCode(1) == Long.hashCode((1L << 32) + 1) == 1: a 32-bit key would merge them.
-        assertThat(Long.hashCode(1L)).isEqualTo(Long.hashCode((1L << 32) + 1));
+        // Long.hashCode(4) == Long.hashCode((1L << 32) + 5) == 4: a 32-bit key would merge them.
+        long small = 4L;
+        long large = (1L << 32) + 5;
+        assertThat(Long.hashCode(small)).isEqualTo(Long.hashCode(large));
 
-        assertThat(ActiveJobLock.lockKey(1L)).isNotEqualTo(ActiveJobLock.lockKey((1L << 32) + 1));
+        assertThat(ActiveJobLock.lockKey(small)).isNotEqualTo(ActiveJobLock.lockKey(large));
     }
 
     @Test
