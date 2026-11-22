@@ -1,5 +1,6 @@
 package com.mkalki.cloudtaskapi.job;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -8,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,6 +18,15 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
     Optional<Job> findByIdAndOwnerId(UUID id, Long ownerId);
 
     Optional<Job> findByOwnerIdAndIdempotencyKey(Long ownerId, String idempotencyKey);
+
+    @Query("select j.status from Job j where j.id = :id")
+    Optional<JobStatus> findStatusById(@Param("id") UUID id);
+
+    /**
+     * One page for the queue reconciler. The database orders by id, so the last id returned is
+     * the cursor for the next page. Only id, priority and run_at are read, never the payload.
+     */
+    List<QueueEntry> findByStatusAndIdGreaterThanOrderByIdAsc(JobStatus status, UUID afterId, Limit limit);
 
     /**
      * Jobs that count toward the per-user cap ({@link JobStatus#activeStatuses()}).
