@@ -44,6 +44,7 @@ public class JobService {
 
     private final JobRepository jobRepository;
     private final JobAttemptRepository attemptRepository;
+    private final ActiveJobLock activeJobLock;
     private final JobRequestValidator validator;
     private final JobStateMachine stateMachine;
     private final JobProperties properties;
@@ -57,6 +58,7 @@ public class JobService {
     public JobService(
             JobRepository jobRepository,
             JobAttemptRepository attemptRepository,
+            ActiveJobLock activeJobLock,
             JobRequestValidator validator,
             JobStateMachine stateMachine,
             JobProperties properties,
@@ -69,6 +71,7 @@ public class JobService {
     ) {
         this.jobRepository = jobRepository;
         this.attemptRepository = attemptRepository;
+        this.activeJobLock = activeJobLock;
         this.validator = validator;
         this.stateMachine = stateMachine;
         this.properties = properties;
@@ -162,6 +165,9 @@ public class JobService {
     }
 
     private SubmitResult create(Long userId, String key, ValidatedJob validated) {
+        // Held until this transaction commits, so the count below and the insert are not
+        // interleaved with another submit from the same user.
+        activeJobLock.lockFor(userId);
         long active = jobRepository.countByOwnerIdAndStatusIn(userId, JobStatus.activeStatuses());
         if (active >= properties.maxActivePerUser()) {
             throw new ActiveJobLimitExceededException(

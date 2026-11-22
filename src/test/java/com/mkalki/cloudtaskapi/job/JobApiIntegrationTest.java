@@ -7,7 +7,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -33,9 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class JobApiIntegrationTest extends JobApiTestSupport {
-
-    @Autowired
-    private JdbcTemplate jdbc;
 
     @Autowired
     private JobRepository jobRepository;
@@ -558,17 +554,5 @@ class JobApiIntegrationTest extends JobApiTestSupport {
                 values (?::uuid, ?, 'demo.work', 'EXPLODED', now(), now(), now())
                 """, UUID.randomUUID().toString(), anyUser))
                 .hasMessageContaining("chk_jobs_status");
-    }
-
-    private long jobCountFor(String token) {
-        Long ownerId = jdbc.queryForObject(
-                "select id from users where username = ?", Long.class, usernameOf(token));
-        return jdbc.queryForObject("select count(*) from jobs where owner_id = ?", Long.class, ownerId);
-    }
-
-    /** The JWT subject is the username, so it is the middle part of the token, base64url-encoded. */
-    private String usernameOf(String token) {
-        String payload = new String(java.util.Base64.getUrlDecoder().decode(token.split("\\.")[1]));
-        return JsonPath.read(payload, "$.sub");
     }
 }
