@@ -100,7 +100,7 @@ class JobApiIntegrationTest extends JobApiTestSupport {
                 """)
                 .andExpect(status().isBadRequest())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
-                        .string("Unknown job type: does.not.exist"));
+                        .string("Unknown job type. Valid types: [demo.work]"));
     }
 
     @Test
