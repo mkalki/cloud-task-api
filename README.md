@@ -14,6 +14,7 @@ The system provides REST APIs for task management, authentication, authorization
 - [Key Features](#-key-features)
 - [System Design](#-system-design)
 - [Getting Started](#-getting-started)
+- [Profiles](#-profiles)
 - [API Documentation](#-api-documentation)
 - [Testing](#-testing)
 - [Observability](#-observability)
@@ -413,6 +414,41 @@ docker compose down -v
 ```
 
 > **Warning:** `docker compose down -v` deletes the PostgreSQL volume and its stored database data.
+
+Redis runs inside the Compose network with AOF persistence (`redis_data` volume) and no published host port. To reach it from your machine while debugging, add the dev override, which publishes it on `127.0.0.1:6379` only:
+
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up -d
+```
+
+---
+
+## 🧩 Profiles
+
+One codebase and one Docker image run in three roles, selected with Spring profiles:
+
+| **Profile** | **Role** |
+|---|---|
+| `api` | REST API (auth, tasks, jobs) |
+| `scheduler` | Releases due jobs and repairs queue state (from F2) |
+| `worker` | Claims and runs jobs (from F3) |
+
+With no profile set, the app runs as `api,scheduler` (`spring.profiles.default`), so the current deploy and tests behave as before. To pick roles explicitly:
+
+```bash
+SPRING_PROFILES_ACTIVE=worker java -jar cloud-task.jar
+```
+
+The role classes contain no logic yet. They mark where each role's beans will go.
+
+Redis connection settings:
+
+| **Env var** | **Default** |
+|---|---|
+| `REDIS_HOST` | `localhost` (`redis` in Compose) |
+| `REDIS_PORT` | `6379` |
+
+`/actuator/health` reports `db` and `redis` separately. If Redis is down, overall health is `DOWN` (HTTP 503) but `/tasks` keeps working.
 
 ---
 
@@ -960,9 +996,22 @@ Deployment Success
 
 ## 🚀 Future Enhancements
 
-- **v2: Redis-based priority task scheduler** — scheduled task execution (September 2026)
-- **Nginx + HTTPS** — reverse proxy, TLS, and domain configuration
-- **Advanced observability** — alerting and production dashboards
+CloudTask v3 evolves the API into a distributed job orchestrator. Full plan: [docs/PRD.md](docs/PRD.md).
+
+| **Feature** | **Scope** |
+|---|---|
+| F0 | Redis infrastructure, role profiles, shared Testcontainers setup |
+| F1 | Job domain and submission API |
+| F2 | Redis scheduler: delayed and priority jobs, reconciler |
+| F3 | Worker runtime: atomic claim, leases, built-in handlers |
+| F4 | Retries with backoff, dead-letter queue, crash recovery |
+| F5 | Workflows (DAGs) |
+| F6 | Real-time dashboard (WebSocket) |
+| F7 | Observability: job metrics and Grafana panels |
+| F8 | Scaling, chaos and load tests |
+| F9 | Recurring (cron) jobs |
+| F10 | Hardening and EC2 deploy |
+| F11 | Docs and interview pack |
 
 ---
 
