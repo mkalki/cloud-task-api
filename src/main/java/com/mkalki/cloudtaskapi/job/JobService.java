@@ -12,6 +12,7 @@ import com.mkalki.cloudtaskapi.job.exception.ActiveJobLimitExceededException;
 import com.mkalki.cloudtaskapi.job.exception.InvalidJobRequestException;
 import com.mkalki.cloudtaskapi.job.exception.JobNotCancellableException;
 import com.mkalki.cloudtaskapi.job.exception.JobNotFoundException;
+import com.mkalki.cloudtaskapi.queue.QueueService;
 import com.mkalki.cloudtaskapi.service.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,7 @@ public class JobService {
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final TransactionTemplate transactionTemplate;
+    private final QueueService queueService;
 
     public JobService(
             JobRepository jobRepository,
@@ -78,7 +80,8 @@ public class JobService {
             RequestContextProvider requestContextProvider,
             ObjectMapper objectMapper,
             Clock clock,
-            PlatformTransactionManager transactionManager
+            PlatformTransactionManager transactionManager,
+            QueueService queueService
     ) {
         this.jobRepository = jobRepository;
         this.attemptRepository = attemptRepository;
@@ -92,12 +95,16 @@ public class JobService {
         this.objectMapper = objectMapper;
         this.clock = clock;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.queueService = queueService;
     }
 
     /**
      * Not annotated with @Transactional on purpose. When two requests race on the same
      * Idempotency-Key, the loser's insert fails the unique index and PostgreSQL aborts
      * that transaction. The fallback read must therefore run after it ends.
+     *
+     * <p>There is no surrounding transaction, so the row is already committed when
+     * transactionTemplate.execute returns. Only then is the job put in Redis.
      */
     public SubmitResult submit(CreateJobRequest request, String idempotencyKey) {
         Long userId = currentUserId();
@@ -112,7 +119,11 @@ public class JobService {
         }
 
         try {
-            return transactionTemplate.execute(status -> create(userId, key, validated));
+            SubmitResult result = transactionTemplate.execute(status -> create(userId, key, validated));
+            if (result.created()) {
+                enqueueQuietly(result.job());
+            }
+            return result;
         } catch (DataIntegrityViolationException e) {
             if (key == null) {
                 throw e;
@@ -145,15 +156,26 @@ public class JobService {
     }
 
     /**
-     * PostgreSQL is authoritative: this only changes the database row. Removing the job
-     * from Redis queues is added in F2. Cancelling an already cancelled job is a no-op.
+     * PostgreSQL is authoritative: the row becomes CANCELLED first, and only the row decides
+     * that the job never runs (the promoter and, from F3, the claim check it). Removing the job
+     * from Redis after the commit is best effort. Cancelling an already cancelled job is a no-op.
      *
      * <p>The change is one conditional update ({@code WHERE status = <what we read>}), so a
      * worker that finishes the job between our read and our update wins: the update matches
      * no row, we read again, see SUCCEEDED and return 409. If another cancel won, we return 200.
      */
-    @Transactional
     public JobResponse cancel(UUID id) {
+        JobResponse response = transactionTemplate.execute(status -> cancelInTransaction(id));
+        try {
+            queueService.remove(id);
+        } catch (RuntimeException e) {
+            log.warn("could not remove cancelled jobId={} from Redis, the promoter drops it later: {}",
+                    id, e.toString());
+        }
+        return response;
+    }
+
+    private JobResponse cancelInTransaction(UUID id) {
         for (int i = 0; i < MAX_CANCEL_ATTEMPTS; i++) {
             Job job = findOwnedJob(id);
             JobStatus previous = job.getStatus();
@@ -182,6 +204,18 @@ public class JobService {
             // Another writer changed the status after our read. Loop: read again and decide.
         }
         throw new ObjectOptimisticLockingFailureException(Job.class, id);
+    }
+
+    /**
+     * A Redis failure never fails the request: the row is committed, and the reconciler puts any
+     * PENDING row that is missing from Redis back into jobs:scheduled.
+     */
+    private void enqueueQuietly(JobResponse job) {
+        try {
+            queueService.enqueueScheduled(job.id(), job.priority(), job.runAt().toEpochMilli());
+        } catch (RuntimeException e) {
+            log.warn("could not enqueue jobId={} in Redis, the reconciler repairs it: {}", job.id(), e.toString());
+        }
     }
 
     private SubmitResult create(Long userId, String key, ValidatedJob validated) {
