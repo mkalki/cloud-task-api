@@ -188,6 +188,17 @@ public class JobService {
         // Held until this transaction commits, so the count below and the insert are not
         // interleaved with another submit from the same user.
         activeJobLock.lockFor(userId);
+
+        // Look the key up again now that we hold the lock. A request with the same key may have
+        // committed while we waited for it, and a retry must get that job back, never the 429
+        // below. The check in submit() is only a fast path that skips the lock and transaction.
+        if (key != null) {
+            Optional<Job> existing = jobRepository.findByOwnerIdAndIdempotencyKey(userId, key);
+            if (existing.isPresent()) {
+                return new SubmitResult(mapper.toResponse(existing.get()), false);
+            }
+        }
+
         long active = jobRepository.countActiveByOwnerId(userId);
         if (active >= properties.maxActivePerUser()) {
             throw new ActiveJobLimitExceededException(

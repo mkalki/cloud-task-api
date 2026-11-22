@@ -1,12 +1,15 @@
 package com.mkalki.cloudtaskapi.job;
 
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -107,6 +111,78 @@ class JobActiveLimitIntegrationTest extends JobApiTestSupport {
             assertThat(jobCountFor(token)).isEqualTo(2);
         } finally {
             pool.shutdownNow();
+        }
+    }
+
+    @Test
+    void retryWithTheSameKeyAtTheCapReturnsTheOriginalJobAndAnotherKeyGets429() throws Exception {
+        String token = registerAndLogin("job-cap-idem-retry");
+        String key = "K-" + UUID.randomUUID();
+        String first = submit(token, DEMO_JOB, key).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        submitOk(token, DEMO_JOB); // now 2 of 2 active jobs
+
+        String retry = submit(token, DEMO_JOB, key).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat((String) JsonPath.read(retry, "$.id")).isEqualTo(JsonPath.read(first, "$.id"));
+        submit(token, DEMO_JOB, "other-" + UUID.randomUUID()).andExpect(status().isTooManyRequests());
+        assertThat(jobCountFor(token)).isEqualTo(2);
+    }
+
+    /**
+     * The case the pre-check in submit() cannot catch: the retry starts while the first request
+     * is still in flight. The retry passes the pre-check (nothing is committed yet) and waits
+     * for the advisory lock. The test holds that lock, inserts the job for the key (so the user
+     * is now at the cap) and then commits. Without the lookup after the lock, the retry would
+     * count 2 of 2 active jobs and return 429.
+     */
+    @Test
+    void retryThatWaitsForTheLockGetsTheJobCommittedMeanwhileNot429() throws Exception {
+        String token = registerAndLogin("job-cap-idem-wait");
+        long ownerId = userIdOf(token);
+        submitOk(token, DEMO_JOB); // limit is 2, so one slot is left
+        String key = "wait-" + UUID.randomUUID();
+        UUID winnerId = UUID.randomUUID();
+        CountDownLatch lockHeld = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+
+        try {
+            Future<?> winner = pool.submit(() -> transactionTemplate.executeWithoutResult(status -> {
+                activeJobLock.lockFor(ownerId);
+                jdbc.update("""
+                        insert into jobs (id, owner_id, type, status, run_at, idempotency_key, created_at, updated_at)
+                        values (?, ?, 'demo.work', 'PENDING', now(), ?, now(), now())
+                        """, winnerId, ownerId, key);
+                lockHeld.countDown();
+                awaitQuietly(release);
+            }));
+            assertThat(lockHeld.await(10, TimeUnit.SECONDS)).isTrue();
+
+            Future<MockHttpServletResponse> retry = pool.submit(() ->
+                    submit(token, DEMO_JOB, key).andReturn().getResponse());
+            await().atMost(Duration.ofSeconds(10)).until(this::someSessionIsWaitingOnALock);
+            release.countDown();
+
+            winner.get(10, TimeUnit.SECONDS);
+            MockHttpServletResponse response = retry.get(10, TimeUnit.SECONDS);
+
+            assertThat(response.getStatus()).isEqualTo(200);
+            assertThat((String) JsonPath.read(response.getContentAsString(), "$.id"))
+                    .isEqualTo(winnerId.toString());
+            assertThat(jobCountFor(token)).isEqualTo(2);
+        } finally {
+            release.countDown();
+            pool.shutdownNow();
+        }
+    }
+
+    private static void awaitQuietly(CountDownLatch latch) {
+        try {
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
