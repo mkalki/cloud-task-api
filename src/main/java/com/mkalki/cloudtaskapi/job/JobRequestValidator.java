@@ -48,7 +48,9 @@ public class JobRequestValidator {
             throw new InvalidJobRequestException("Job type is required");
         }
         if (!registry.isRegistered(type)) {
-            throw new InvalidJobRequestException("Unknown job type: " + type);
+            // The client's value is not echoed back. The message lists the allowed types instead.
+            throw new InvalidJobRequestException(
+                    "Unknown job type. Valid types: " + registry.types().stream().sorted().toList());
         }
 
         Instant runAt = resolveRunAt(request, clock.instant());

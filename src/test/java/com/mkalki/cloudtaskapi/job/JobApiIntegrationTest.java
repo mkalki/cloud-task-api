@@ -7,7 +7,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -25,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,9 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class JobApiIntegrationTest extends JobApiTestSupport {
-
-    @Autowired
-    private JdbcTemplate jdbc;
 
     @Autowired
     private JobRepository jobRepository;
@@ -103,7 +100,7 @@ class JobApiIntegrationTest extends JobApiTestSupport {
                 """)
                 .andExpect(status().isBadRequest())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
-                        .string("Unknown job type: does.not.exist"));
+                        .string("Unknown job type. Valid types: [demo.work]"));
     }
 
     @Test
@@ -173,6 +170,27 @@ class JobApiIntegrationTest extends JobApiTestSupport {
 
         submit(token, "{\"type\": \"demo.work\", \"payload\": {\"blob\": \"" + payloadValue + "\"}}")
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void bodyAboveTheRequestSizeLimitIsRejectedBeforeParsing() throws Exception {
+        String token = registerAndLogin("job-huge");
+        // Not even valid JSON: a 400 here would mean Jackson parsed it, so 413 proves the filter ran first.
+        String huge = "{\"type\": \"demo.work\", \"payload\": " + "[".repeat(200_000);
+
+        submit(token, huge)
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(content().string("Request body exceeds 73728 bytes"));
+
+        assertThat(jobCountFor(token)).isZero();
+    }
+
+    @Test
+    void oversizedBodyIsRejectedEvenWithoutAToken() throws Exception {
+        mockMvc.perform(post("/api/v1/jobs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("x".repeat(100_000)))
+                .andExpect(status().isPayloadTooLarge());
     }
 
     @Test
@@ -325,6 +343,39 @@ class JobApiIntegrationTest extends JobApiTestSupport {
                 .andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/v1/jobs?status=NOT_A_STATUS").header("Authorization", auth))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void sortOutsideTheWhitelistIsRejectedWithoutEchoingTheInput() throws Exception {
+        String token = registerAndLogin("job-sort-bad");
+        String auth = "Bearer " + token;
+
+        for (String sort : List.of("<script>alert(1)</script>", "createdAt,sideways",
+                "createdAt,desc,extra", "ownerId,asc", "idempotencyKey", "createdAt,")) {
+            mockMvc.perform(get("/api/v1/jobs").param("sort", sort).header("Authorization", auth))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string(JobService.INVALID_SORT_MESSAGE));
+        }
+
+        mockMvc.perform(get("/api/v1/jobs").param("sort", "runAt").header("Authorization", auth))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/jobs").param("sort", "type,DESC").header("Authorization", auth))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void listRowsLeaveOutThePayloadButGetIncludesIt() throws Exception {
+        String token = registerAndLogin("job-list-payload");
+        String id = submitOk(token, "{\"type\": \"demo.work\", \"payload\": {\"blob\": \"" + "x".repeat(1000) + "\"}}");
+
+        mockMvc.perform(get("/api/v1/jobs").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(id))
+                .andExpect(jsonPath("$.content[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.content[0].payload").doesNotExist())
+                .andExpect(jsonPath("$.content[0].attempts").doesNotExist());
+
+        getJob(token, id).andExpect(jsonPath("$.payload.blob").exists());
     }
 
     // ---------- cancel ----------
@@ -536,17 +587,5 @@ class JobApiIntegrationTest extends JobApiTestSupport {
                 values (?::uuid, ?, 'demo.work', 'EXPLODED', now(), now(), now())
                 """, UUID.randomUUID().toString(), anyUser))
                 .hasMessageContaining("chk_jobs_status");
-    }
-
-    private long jobCountFor(String token) {
-        Long ownerId = jdbc.queryForObject(
-                "select id from users where username = ?", Long.class, usernameOf(token));
-        return jdbc.queryForObject("select count(*) from jobs where owner_id = ?", Long.class, ownerId);
-    }
-
-    /** The JWT subject is the username, so it is the middle part of the token, base64url-encoded. */
-    private String usernameOf(String token) {
-        String payload = new String(java.util.Base64.getUrlDecoder().decode(token.split("\\.")[1]));
-        return JsonPath.read(payload, "$.sub");
     }
 }

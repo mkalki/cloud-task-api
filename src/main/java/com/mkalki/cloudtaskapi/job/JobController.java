@@ -2,6 +2,7 @@ package com.mkalki.cloudtaskapi.job;
 
 import com.mkalki.cloudtaskapi.job.dto.CreateJobRequest;
 import com.mkalki.cloudtaskapi.job.dto.JobResponse;
+import com.mkalki.cloudtaskapi.job.dto.JobSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -76,18 +77,20 @@ public class JobController {
 
     @Operation(summary = "List your jobs.",
             description = "Paginated list of the caller's jobs, newest first by default. "
-                    + "Optional filters: status and type.")
+                    + "Optional filters: status and type. Rows do not include the payload; "
+                    + "use GET /api/v1/jobs/{id} for it.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "A page of jobs."),
             @ApiResponse(responseCode = "400", description = "Invalid page, size, sort or filter.")
     })
     @GetMapping
-    public Page<JobResponse> list(
+    public Page<JobSummaryResponse> list(
             @Parameter(description = "Zero-based page index.")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size, 1 to 100.")
             @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "field,direction. Fields: createdAt, updatedAt, runAt, priority, status, type.")
+            @Parameter(description = "field or field,asc or field,desc. "
+                    + "Fields: createdAt, updatedAt, runAt, priority, status, type.")
             @RequestParam(defaultValue = "createdAt,desc") String sort,
             @Parameter(description = "Only jobs in this status.")
             @RequestParam(required = false) JobStatus status,

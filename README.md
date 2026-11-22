@@ -510,7 +510,7 @@ Jobs are background work items. In this release they are stored and managed but 
 | **Method** | **Endpoint** | **Description** |
 |---|---|---|
 | POST | `/jobs` | Submit a job. Returns `201`, or `200` with the original job when the `Idempotency-Key` header was already used |
-| GET | `/jobs` | List your jobs. Supports `page`, `size` (1-100), `sort`, `status`, `type` |
+| GET | `/jobs` | List your jobs without their payloads. Supports `page`, `size` (1-100), `sort` (`createdAt`, `updatedAt`, `runAt`, `priority`, `status`, `type`, optionally `,asc` or `,desc`), `status`, `type` |
 | GET | `/jobs/{id}` | Get one job with its attempts. Other users' jobs return `404` |
 | POST | `/jobs/{id}/cancel` | Cancel a job that has not finished. Cancelling twice is a no-op; finished jobs return `409` |
 
@@ -532,9 +532,16 @@ Only `type` is required. Use `runAt` (ISO-8601 UTC) or `delaySeconds`, not both.
 | **Rule** | **Result** |
 |---|---|
 | Unknown type, out-of-range field, `runAt` more than 365 days ahead | `400` |
-| Payload larger than 64 KB | `413` |
+| Payload larger than 64 KB, or request body larger than 72 KB | `413` |
 | Missing or invalid token | `401` |
 | Too many requests, or the active-job limit is reached | `429` |
+
+Notes on responses:
+
+- `GET /jobs` rows omit `payload` and `attempts`. Read them from `GET /jobs/{id}`.
+- `413` can come before `401`. The request-size filter runs before authentication, so an oversized body is refused without a token check and never reaches the JSON parser.
+- A retry with an `Idempotency-Key` that already created a job returns `200` with that job, even when the user is at the active-job limit. Only a new key gets `429`.
+- An unknown job `type` returns `400` listing the valid types; the submitted value is not echoed back.
 
 Job settings (defaults shown):
 
@@ -543,6 +550,7 @@ Job settings (defaults shown):
 | `cloudtask.jobs.max-active-per-user` | `1000` | Most BLOCKED, PENDING, QUEUED or RUNNING jobs one user may hold |
 | `cloudtask.jobs.max-payload-bytes` | `65536` | Largest accepted payload (serialized JSON) |
 | `cloudtask.jobs.max-schedule-ahead-days` | `365` | Furthest in the future a job may be scheduled |
+| `cloudtask.request-size.rules[n].method` / `.path` / `.max-size` | `POST` `/api/v1/jobs` `72KB` | Largest request body per path. Bodies above it get `413` before they are parsed. Setting any rule replaces the default list |
 
 ---
 

@@ -68,7 +68,16 @@ class JobRequestValidatorTest {
     void unknownTypeIsRejected() {
         assertThatThrownBy(() -> validator.validate(request("rm.everything", null, null, null, null, null, null)))
                 .isInstanceOf(InvalidJobRequestException.class)
-                .hasMessage("Unknown job type: rm.everything");
+                .hasMessage("Unknown job type. Valid types: [demo.work]");
+    }
+
+    @Test
+    void unknownTypeMessageNeverEchoesTheClientValue() {
+        assertThatThrownBy(() -> validator.validate(
+                request("<script>alert(1)</script>", null, null, null, null, null, null)))
+                .isInstanceOf(InvalidJobRequestException.class)
+                .hasMessageNotContaining("script")
+                .hasMessageContaining("demo.work");
     }
 
     @Test

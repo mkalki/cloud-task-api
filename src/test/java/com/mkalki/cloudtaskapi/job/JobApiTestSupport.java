@@ -4,9 +4,11 @@ import com.jayway.jsonpath.JsonPath;
 import com.mkalki.cloudtaskapi.config.IntegrationTestConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.Base64;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,6 +24,9 @@ public abstract class JobApiTestSupport extends IntegrationTestConfig {
 
     @Autowired
     protected MockMvc mockMvc;
+
+    @Autowired
+    protected JdbcTemplate jdbc;
 
     /** Registers a new user with a unique name and returns an access token. */
     protected String registerAndLogin(String prefix) throws Exception {
@@ -75,5 +80,34 @@ public abstract class JobApiTestSupport extends IntegrationTestConfig {
     protected ResultActions cancelJob(String token, String id) throws Exception {
         return mockMvc.perform(post("/api/v1/jobs/" + id + "/cancel")
                 .header("Authorization", "Bearer " + token));
+    }
+
+    protected long userIdOf(String token) {
+        return jdbc.queryForObject(
+                "select id from users where username = ?", Long.class, usernameOf(token));
+    }
+
+    protected long jobCountFor(String token) {
+        return jdbc.queryForObject(
+                "select count(*) from jobs where owner_id = ?", Long.class, userIdOf(token));
+    }
+
+    /**
+     * True while some other database session is blocked on a lock. Tests use it to know that
+     * a request has reached a statement that waits for an uncommitted transaction.
+     */
+    protected boolean someSessionIsWaitingOnALock() {
+        Long waiting = jdbc.queryForObject("""
+                select count(*) from pg_stat_activity
+                 where wait_event_type = 'Lock'
+                   and pid <> pg_backend_pid()
+                """, Long.class);
+        return waiting != null && waiting > 0;
+    }
+
+    /** The JWT subject is the username, so it is the middle part of the token, base64url-encoded. */
+    private String usernameOf(String token) {
+        String payload = new String(Base64.getUrlDecoder().decode(token.split("\\.")[1]));
+        return JsonPath.read(payload, "$.sub");
     }
 }

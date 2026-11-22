@@ -2,6 +2,7 @@ package com.mkalki.cloudtaskapi.job;
 
 import com.mkalki.cloudtaskapi.job.dto.JobAttemptResponse;
 import com.mkalki.cloudtaskapi.job.dto.JobResponse;
+import com.mkalki.cloudtaskapi.job.dto.JobSummaryResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,6 +12,27 @@ public class JobMapper {
 
     public JobResponse toResponse(Job job) {
         return toResponse(job, null);
+    }
+
+    /** For list pages: no payload, no attempts. */
+    public JobSummaryResponse toSummary(Job job) {
+        return new JobSummaryResponse(
+                job.getId(),
+                job.getType(),
+                job.getStatus(),
+                job.getPriority(),
+                job.getAttempt(),
+                job.getMaxAttempts(),
+                job.getTimeoutSeconds(),
+                job.getRunAt(),
+                job.getWorkflowId(),
+                job.getIdempotencyKey(),
+                job.getLastError(),
+                job.getStartedAt(),
+                job.getFinishedAt(),
+                job.getCreatedAt(),
+                job.getUpdatedAt()
+        );
     }
 
     public JobResponse toResponse(Job job, List<JobAttempt> attempts) {
