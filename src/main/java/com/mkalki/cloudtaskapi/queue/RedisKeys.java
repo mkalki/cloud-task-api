@@ -33,4 +33,14 @@ public final class RedisKeys {
     public static long readyScore(int priority, long dueEpochMs) {
         return (MAX_PRIORITY - priority) * PRIORITY_STEP + dueEpochMs;
     }
+
+    /**
+     * Counter keys written by the demo.work handler when a job has a counterKey (used by tests and
+     * demos to prove that a job never runs twice at once). The owner id keeps users apart.
+     *
+     * @param field one of running, runs, overlaps
+     */
+    public static String demoCounter(long ownerId, String counterKey, String field) {
+        return "demo:counter:" + ownerId + ":" + counterKey + ":" + field;
+    }
 }

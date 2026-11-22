@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -20,6 +21,8 @@ public class QueueService {
     private static final DefaultRedisScript<List> PROMOTE_DUE = script("promote_due.lua", List.class);
     private static final DefaultRedisScript<Long> ENQUEUE_READY = script("enqueue_ready.lua", Long.class);
     private static final DefaultRedisScript<Long> REMOVE = script("remove.lua", Long.class);
+    private static final DefaultRedisScript<String> CLAIM = script("claim.lua", String.class);
+    private static final DefaultRedisScript<Long> RENEW_LEASE = script("renew_lease.lua", Long.class);
 
     private final StringRedisTemplate redis;
 
@@ -50,6 +53,39 @@ public class QueueService {
     /** Best-effort removal from the scheduled and ready queues. Jobs held by a worker are untouched. */
     public void remove(UUID jobId) {
         redis.execute(REMOVE, List.of(RedisKeys.SCHEDULED, RedisKeys.READY), jobId.toString());
+    }
+
+    /**
+     * Atomically takes the best job from jobs:ready and registers it in jobs:processing with the
+     * given lease deadline. Each job is returned to exactly one caller.
+     *
+     * @param leaseDeadlineMs epoch milliseconds at which the claim expires unless it is renewed
+     * @return the job id, or empty when nothing is ready
+     */
+    public Optional<UUID> claim(long leaseDeadlineMs) {
+        String id = redis.execute(
+                CLAIM,
+                List.of(RedisKeys.READY, RedisKeys.PROCESSING),
+                Long.toString(leaseDeadlineMs));
+        return id == null ? Optional.empty() : Optional.of(UUID.fromString(id));
+    }
+
+    /**
+     * Moves the lease deadline of a job that is still in jobs:processing. It never adds the job:
+     * false means the job is not held any more (released, or Redis lost it) and the caller lost its lease.
+     */
+    public boolean renewLease(UUID jobId, long leaseDeadlineMs) {
+        Long renewed = redis.execute(
+                RENEW_LEASE,
+                List.of(RedisKeys.PROCESSING),
+                jobId.toString(),
+                Long.toString(leaseDeadlineMs));
+        return renewed != null && renewed == 1;
+    }
+
+    /** Removes the job from jobs:processing. Calling it for a job that is not there changes nothing. */
+    public void release(UUID jobId) {
+        redis.opsForZSet().remove(RedisKeys.PROCESSING, jobId.toString());
     }
 
     /**
