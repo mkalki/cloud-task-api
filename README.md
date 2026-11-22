@@ -532,9 +532,16 @@ Only `type` is required. Use `runAt` (ISO-8601 UTC) or `delaySeconds`, not both.
 | **Rule** | **Result** |
 |---|---|
 | Unknown type, out-of-range field, `runAt` more than 365 days ahead | `400` |
-| Payload larger than 64 KB | `413` |
+| Payload larger than 64 KB, or request body larger than 72 KB | `413` |
 | Missing or invalid token | `401` |
 | Too many requests, or the active-job limit is reached | `429` |
+
+Notes on responses:
+
+- `GET /jobs` rows omit `payload` and `attempts`. Read them from `GET /jobs/{id}`.
+- `413` can come before `401`. The request-size filter runs before authentication, so an oversized body is refused without a token check and never reaches the JSON parser.
+- A retry with an `Idempotency-Key` that already created a job returns `200` with that job, even when the user is at the active-job limit. Only a new key gets `429`.
+- An unknown job `type` returns `400` listing the valid types; the submitted value is not echoed back.
 
 Job settings (defaults shown):
 
