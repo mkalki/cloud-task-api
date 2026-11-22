@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,7 +17,17 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
 
     Optional<Job> findByOwnerIdAndIdempotencyKey(Long ownerId, String idempotencyKey);
 
-    long countByOwnerIdAndStatusIn(Long ownerId, Collection<JobStatus> statuses);
+    /**
+     * Jobs that count toward the per-user cap ({@link JobStatus#activeStatuses()}).
+     * The statuses are literals, not parameters, so PostgreSQL can use the partial index
+     * idx_jobs_owner_active (V11). Keep the list in sync with JobStatus; a test checks it.
+     */
+    @Query(value = """
+            select count(*) from jobs
+             where owner_id = :ownerId
+               and status in ('BLOCKED', 'PENDING', 'QUEUED', 'RUNNING')
+            """, nativeQuery = true)
+    long countActiveByOwnerId(@Param("ownerId") Long ownerId);
 
     /**
      * Conditional status change: only updates the row if it is still in {@code from}.

@@ -180,7 +180,7 @@ public class JobService {
         // Held until this transaction commits, so the count below and the insert are not
         // interleaved with another submit from the same user.
         activeJobLock.lockFor(userId);
-        long active = jobRepository.countByOwnerIdAndStatusIn(userId, JobStatus.activeStatuses());
+        long active = jobRepository.countActiveByOwnerId(userId);
         if (active >= properties.maxActivePerUser()) {
             throw new ActiveJobLimitExceededException(
                     "Active job limit of " + properties.maxActivePerUser() + " reached");

@@ -10,6 +10,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +32,9 @@ class JobActiveLimitIntegrationTest extends JobApiTestSupport {
 
     @Autowired
     private TransactionTemplate transactionTemplate;
+
+    @Autowired
+    private JobRepository jobRepository;
 
     @Test
     void submittingBeyondTheActiveLimitReturns429() throws Exception {
@@ -112,5 +116,32 @@ class JobActiveLimitIntegrationTest extends JobApiTestSupport {
                 .isInstanceOf(IllegalStateException.class);
 
         transactionTemplate.executeWithoutResult(status -> activeJobLock.lockFor(1L));
+    }
+
+    @Test
+    void exactlyTheActiveStatusesCountTowardTheCap() throws Exception {
+        String token = registerAndLogin("job-cap-statuses");
+        long ownerId = userIdOf(token);
+        for (JobStatus status : JobStatus.values()) {
+            jdbc.update("""
+                    insert into jobs (id, owner_id, type, status, run_at, created_at, updated_at)
+                    values (?, ?, 'demo.work', ?, now(), now(), now())
+                    """, UUID.randomUUID(), ownerId, status.name());
+        }
+
+        assertThat(jobRepository.countActiveByOwnerId(ownerId))
+                .as("the native query must list the same statuses as JobStatus.activeStatuses()")
+                .isEqualTo(JobStatus.activeStatuses().size());
+    }
+
+    @Test
+    void activeJobIndexesArePartial() {
+        List<String> definitions = jdbc.queryForList("""
+                select indexdef from pg_indexes
+                 where tablename = 'jobs'
+                   and indexname in ('idx_jobs_owner_active', 'idx_jobs_waiting_run_at')
+                """, String.class);
+
+        assertThat(definitions).hasSize(2).allSatisfy(def -> assertThat(def).contains("WHERE"));
     }
 }
