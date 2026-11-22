@@ -430,7 +430,7 @@ One codebase and one Docker image run in three roles, selected with Spring profi
 | **Profile** | **Role** |
 |---|---|
 | `api` | REST API (auth, tasks, jobs) |
-| `scheduler` | Releases due jobs and repairs queue state (from F2) |
+| `scheduler` | Releases due jobs to the Redis ready queue and rebuilds the queues from PostgreSQL (F2) |
 | `worker` | Claims and runs jobs (from F3) |
 
 With no profile set, the app runs as `api,scheduler` (`spring.profiles.default`), so the current deploy and tests behave as before. To pick roles explicitly:
@@ -439,7 +439,7 @@ With no profile set, the app runs as `api,scheduler` (`spring.profiles.default`)
 SPRING_PROFILES_ACTIVE=worker java -jar cloud-task.jar
 ```
 
-The role classes contain no logic yet. They mark where each role's beans will go.
+The `scheduler` role runs the promote loop and the reconciler (see "Scheduler" below). The `api` and `worker` role classes still hold no logic.
 
 Redis connection settings:
 
@@ -505,7 +505,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### Job Endpoints
 
-Jobs are background work items. In this release they are stored and managed but not executed yet: a submitted job stays `PENDING` until the scheduler and workers arrive. Job endpoints live under `/api/v1` like the others.
+Jobs are background work items. In this release they are stored, scheduled and queued but not executed yet: a submitted job moves `PENDING` -> `QUEUED` when its run time arrives, and stays `QUEUED` until workers arrive. Job endpoints live under `/api/v1` like the others.
 
 | **Method** | **Endpoint** | **Description** |
 |---|---|---|
@@ -551,6 +551,30 @@ Job settings (defaults shown):
 | `cloudtask.jobs.max-payload-bytes` | `65536` | Largest accepted payload (serialized JSON) |
 | `cloudtask.jobs.max-schedule-ahead-days` | `365` | Furthest in the future a job may be scheduled |
 | `cloudtask.request-size.rules[n].method` / `.path` / `.max-size` | `POST` `/api/v1/jobs` `72KB` | Largest request body per path. Bodies above it get `413` before they are parsed. Setting any rule replaces the default list |
+
+### Scheduler
+
+PostgreSQL is the source of truth. Redis holds two queues that can be rebuilt at any time (ADR 002):
+
+| **Redis key** | **Type** | **Content** |
+|---|---|---|
+| `jobs:scheduled` | sorted set | member `priority:jobId`, score = run time in epoch ms |
+| `jobs:ready` | sorted set | member `jobId`, score = `(9 - priority) * 10^14 + epoch ms`, so priority 9 comes first and equal priorities are first in, first out |
+| `jobs:processing` | sorted set | jobs held by a worker (filled from F3) |
+
+- **Submit** commits the row, then adds the job to `jobs:scheduled`. If Redis is down the request still succeeds and the reconciler adds the job later.
+- **Promote** runs every `poll-interval`. One Lua script moves due jobs from `jobs:scheduled` to `jobs:ready`. The scheduler then runs `UPDATE ... WHERE status = 'PENDING'` to set `QUEUED`. Several scheduler instances may run at once; each job is moved once.
+- **Cancel** sets the row to `CANCELLED` first, then removes the job from Redis. A cancelled row is never promoted, even if the Redis removal failed.
+- **Reconcile** runs at startup and every `reconcile-interval`. It writes every `PENDING` row to `jobs:scheduled` and every `QUEUED` row that is in neither `jobs:ready` nor `jobs:processing` to `jobs:ready`. After `FLUSHALL` on Redis nothing is lost.
+- Low-priority jobs can wait indefinitely while higher-priority jobs keep arriving. This is accepted.
+
+| **Property** | **Default** | **Meaning** |
+|---|---|---|
+| `cloudtask.scheduler.enabled` | `true` | Turns the promote loop and periodic reconciler off (tests use this) |
+| `cloudtask.scheduler.poll-interval` | `PT1S` | Pause between promote runs |
+| `cloudtask.scheduler.promote-batch-size` | `100` | Most jobs moved per promote run |
+| `cloudtask.scheduler.reconcile-interval` | `PT60S` | Pause between reconcile runs |
+| `cloudtask.scheduler.reconcile-batch-size` | `500` | Rows read per page while reconciling |
 
 ---
 
