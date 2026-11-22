@@ -66,4 +66,79 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
             @Param("to") JobStatus to,
             @Param("now") Instant now,
             @Param("finishedAt") Instant finishedAt);
+
+    /**
+     * A worker's claim: QUEUED to RUNNING, one more attempt, who holds the job and until when.
+     * Call it through {@link JobStateMachine#claim} only.
+     */
+    @Transactional
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Job j
+               set j.status = :to,
+                   j.attempt = j.attempt + 1,
+                   j.lockedBy = :workerId,
+                   j.leaseExpiresAt = :leaseExpiresAt,
+                   j.startedAt = :now,
+                   j.updatedAt = :now,
+                   j.finishedAt = null,
+                   j.version = j.version + 1
+             where j.id = :id
+               and j.status = :from
+            """)
+    int claimIfQueued(
+            @Param("id") UUID id,
+            @Param("from") JobStatus from,
+            @Param("to") JobStatus to,
+            @Param("workerId") String workerId,
+            @Param("now") Instant now,
+            @Param("leaseExpiresAt") Instant leaseExpiresAt);
+
+    /** Lease renewal. Changes a row only while this worker still holds this attempt. */
+    @Transactional
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Job j
+               set j.leaseExpiresAt = :leaseExpiresAt,
+                   j.version = j.version + 1
+             where j.id = :id
+               and j.status = :status
+               and j.attempt = :attempt
+               and j.lockedBy = :workerId
+            """)
+    int extendLeaseIfOwned(
+            @Param("id") UUID id,
+            @Param("status") JobStatus status,
+            @Param("attempt") int attempt,
+            @Param("workerId") String workerId,
+            @Param("leaseExpiresAt") Instant leaseExpiresAt);
+
+    /**
+     * The fenced result of a run. Matches only while the row is in {@code from} for this attempt and
+     * this worker. Call it through {@link JobStateMachine#transitionIfOwned} only.
+     */
+    @Transactional
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Job j
+               set j.status = :to,
+                   j.updatedAt = :now,
+                   j.finishedAt = :finishedAt,
+                   j.lastError = :lastError,
+                   j.leaseExpiresAt = null,
+                   j.version = j.version + 1
+             where j.id = :id
+               and j.status = :from
+               and j.attempt = :attempt
+               and j.lockedBy = :workerId
+            """)
+    int updateStatusIfOwned(
+            @Param("id") UUID id,
+            @Param("from") JobStatus from,
+            @Param("to") JobStatus to,
+            @Param("attempt") int attempt,
+            @Param("workerId") String workerId,
+            @Param("lastError") String lastError,
+            @Param("now") Instant now,
+            @Param("finishedAt") Instant finishedAt);
 }

@@ -94,4 +94,32 @@ public class JobStateMachine {
         Instant finishedAt = to.isTerminal() ? now : null;
         return jobRepository.updateStatusIfCurrent(id, from, to, now, finishedAt) == 1;
     }
+
+    /**
+     * A worker takes a job: QUEUED to RUNNING in one conditional update that also adds one to
+     * {@code attempt} and records who holds the job and until when. Returns false when the row is
+     * not QUEUED (cancelled, or the promoter has not yet finished its own update).
+     */
+    public boolean claim(UUID id, String workerId, Instant now, Instant leaseExpiresAt) {
+        if (!canTransition(QUEUED, RUNNING)) {
+            throw new IllegalJobTransitionException(QUEUED, RUNNING);
+        }
+        return jobRepository.claimIfQueued(id, QUEUED, RUNNING, workerId, now, leaseExpiresAt) == 1;
+    }
+
+    /**
+     * The fenced result of a run: moves the job out of RUNNING only if it is still RUNNING for this
+     * attempt number and this worker. Returns false when the run was fenced off (cancelled, or taken
+     * over by another worker after the lease expired); the caller must then ignore its result.
+     * Clears the lease and stores {@code lastError} (null on success).
+     */
+    public boolean transitionIfOwned(
+            UUID id, int attempt, String workerId, JobStatus to, String lastError, Instant now) {
+        if (!canTransition(RUNNING, to)) {
+            throw new IllegalJobTransitionException(RUNNING, to);
+        }
+        Instant finishedAt = to.isTerminal() ? now : null;
+        return jobRepository.updateStatusIfOwned(
+                id, RUNNING, to, attempt, workerId, lastError, now, finishedAt) == 1;
+    }
 }

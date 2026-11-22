@@ -55,6 +55,7 @@ public class JobRequestValidator {
 
         Instant runAt = resolveRunAt(request, clock.instant());
         JsonNode payload = checkedPayload(request.payload());
+        registry.find(type).ifPresent(handler -> handler.validatePayload(payload));
 
         return new ValidatedJob(
                 type,

@@ -10,6 +10,7 @@ import com.mkalki.cloudtaskapi.job.handler.JobContext;
 import com.mkalki.cloudtaskapi.job.handler.JobHandler;
 import com.mkalki.cloudtaskapi.job.handler.JobHandlerRegistry;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -18,15 +19,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 class JobRequestValidatorTest {
 
     private static final Instant NOW = Instant.parse("2026-12-01T10:00:00Z");
     private static final int MAX_PAYLOAD_BYTES = 100;
 
+    /** DemoWorkHandler only touches Redis when a job has a counterKey, which these tests never use. */
+    private final StringRedisTemplate redis = mock(StringRedisTemplate.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final JobRequestValidator validator = new JobRequestValidator(
-            new JobHandlerRegistry(List.of(new DemoWorkHandler())),
+            new JobHandlerRegistry(List.of(new DemoWorkHandler(redis))),
             new JobProperties(1000, MAX_PAYLOAD_BYTES, 365),
             Clock.fixed(NOW, ZoneOffset.UTC),
             objectMapper
@@ -164,7 +168,7 @@ class JobRequestValidatorTest {
             }
         };
 
-        assertThatThrownBy(() -> new JobHandlerRegistry(List.of(new DemoWorkHandler(), duplicate)))
+        assertThatThrownBy(() -> new JobHandlerRegistry(List.of(new DemoWorkHandler(redis), duplicate)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("demo.work");
     }
