@@ -431,7 +431,7 @@ One codebase and one Docker image run in three roles, selected with Spring profi
 |---|---|
 | `api` | REST API (auth, tasks, jobs) |
 | `scheduler` | Releases due jobs to the Redis ready queue and rebuilds the queues from PostgreSQL (F2) |
-| `worker` | Claims and runs jobs (from F3) |
+| `worker` | Claims jobs from Redis and runs them (F3a) |
 
 With no profile set, the app runs as `api,scheduler` (`spring.profiles.default`), so the current deploy and tests behave as before. To pick roles explicitly:
 
@@ -439,7 +439,7 @@ With no profile set, the app runs as `api,scheduler` (`spring.profiles.default`)
 SPRING_PROFILES_ACTIVE=worker java -jar cloud-task.jar
 ```
 
-The `scheduler` role runs the promote loop and the reconciler (see "Scheduler" below). The `api` and `worker` role classes still hold no logic.
+The `scheduler` role runs the promote loop and the reconciler (see "Scheduler" below). The `worker` role starts one worker (see "Worker" below). The `api` role class still holds no logic.
 
 Redis connection settings:
 
@@ -505,7 +505,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### Job Endpoints
 
-Jobs are background work items. In this release they are stored, scheduled and queued but not executed yet: a submitted job moves `PENDING` -> `QUEUED` when its run time arrives, and stays `QUEUED` until workers arrive. Job endpoints live under `/api/v1` like the others.
+Jobs are background work items. A submitted job moves `PENDING` -> `QUEUED` when its run time arrives (scheduler), then `RUNNING` -> `SUCCEEDED` or `DEAD` when a worker runs it. Without a process in the `worker` role a job stays `QUEUED`. Retries and the reaper for crashed workers arrive in F4; until then any failure ends in `DEAD`. Job endpoints live under `/api/v1` like the others.
 
 | **Method** | **Endpoint** | **Description** |
 |---|---|---|
@@ -560,7 +560,7 @@ PostgreSQL is the source of truth. Redis holds two queues that can be rebuilt at
 |---|---|---|
 | `jobs:scheduled` | sorted set | member `priority:jobId`, score = run time in epoch ms |
 | `jobs:ready` | sorted set | member `jobId`, score = `(9 - priority) * 10^14 + epoch ms`, so priority 9 comes first and equal priorities are first in, first out |
-| `jobs:processing` | sorted set | jobs held by a worker (filled from F3) |
+| `jobs:processing` | sorted set | member `jobId`, score = lease deadline in epoch ms. Written by workers |
 
 - **Submit** commits the row, then adds the job to `jobs:scheduled`. If Redis is down the request still succeeds and the reconciler adds the job later.
 - **Promote** runs every `poll-interval`. One Lua script moves due jobs from `jobs:scheduled` to `jobs:ready`. The scheduler then runs `UPDATE ... WHERE status = 'PENDING'` to set `QUEUED`. Several scheduler instances may run at once; each job is moved once.
@@ -575,6 +575,37 @@ PostgreSQL is the source of truth. Redis holds two queues that can be rebuilt at
 | `cloudtask.scheduler.promote-batch-size` | `100` | Most jobs moved per promote run |
 | `cloudtask.scheduler.reconcile-interval` | `PT60S` | Pause between reconcile runs |
 | `cloudtask.scheduler.reconcile-batch-size` | `500` | Rows read per page while reconciling |
+
+### Worker
+
+A process started with `SPRING_PROFILES_ACTIVE=worker` runs one worker (ADR 003). It claims jobs, runs their handler and writes the result. Several workers can run at once, on one machine or many.
+
+1. **Claim.** `claim.lua` takes the best id from `jobs:ready` and adds it to `jobs:processing` with score = now + lease, in one atomic step. Then one SQL update moves the row `QUEUED` -> `RUNNING` (`attempt` + 1, `locked_by`, `lease_expires_at`, `started_at`). If it changes no row (the job was cancelled, or is still `PENDING` because the promoter had not finished), the worker removes the id from `jobs:processing` and moves on. The reconciler brings a still-`PENDING` job back within its interval (60 s by default).
+2. **Lease.** While the handler runs, every `lease-ms / 3` the worker extends the deadline in Redis (`renew_lease.lua`, returns 1 or 0) and in the database. If either says the job is no longer held, the handler is interrupted and no result is reported.
+3. **Result.** `UPDATE ... WHERE id = ? AND status = 'RUNNING' AND attempt = ? AND locked_by = ?`. A run whose lease was lost or whose job was cancelled matches no row: its result is ignored, an attempt row with outcome `FENCED` is stored and the log says `fenced result ignored`. Success gives `SUCCEEDED`. Any failure or timeout gives `DEAD` with `last_error` (cut to 4 KB) until F4 adds retries.
+4. **Attempts.** Every run writes one `job_attempts` row: worker, start, end, outcome (`SUCCEEDED`, `FAILED`, `TIMEOUT`, `FENCED`), error, duration.
+5. **Timeout.** The handler runs in a `Future`. After `timeoutSeconds` it is cancelled with an interrupt and the attempt is `TIMEOUT`. Java cannot kill a thread: a handler that ignores interrupts keeps running. The fence still rejects its late result, and the lease runs out because the worker stops renewing it.
+6. **Delivery is at-least-once.** A job can run twice after a crash or a lost lease, so handlers must be idempotent.
+
+A worker takes a job only when it has a free slot, so a queue of 1000 jobs does not pile up inside one worker. When the queue is empty it polls every `poll-min-ms`, backing off to `poll-max-ms`. On shutdown it stops claiming and waits up to 5 s for running jobs; the rest are interrupted, report nothing and wait for their lease to expire (the reaper arrives in F4; `cloudtask.worker.shutdown-grace` arrives in F3c).
+
+| **Property** | **Default** | **Meaning** |
+|---|---|---|
+| `cloudtask.worker.enabled` | `true` | Starts one worker in the `worker` profile (tests set `false` and create workers themselves) |
+| `cloudtask.worker.concurrency` | `4` | Jobs one worker runs at the same time |
+| `cloudtask.worker.lease-ms` | `30000` | How long a claim holds a job without renewal. Renewed every third of it |
+| `cloudtask.worker.poll-min-ms` | `200` | Pause between polls right after work was found |
+| `cloudtask.worker.poll-max-ms` | `1000` | Longest pause between polls while the queue is empty |
+
+Run locally (after the API and Redis are up, with the same database settings as the API):
+
+```bash
+SPRING_PROFILES_ACTIVE=worker SERVER_PORT=8081 java -jar cloud-task.jar
+```
+
+The worker still starts the web server and security chain of the shared image, so it needs its own port when it shares a host with the API. The Compose worker service, its heartbeat and `GET /admin/workers` arrive in F3c.
+
+Built-in handler in this release: `demo.work` with payload `{"durationMs": 0-60000, "failProbability": 0-1, "counterKey": "..."}`. All fields are optional and unknown fields are ignored. A bad value returns `400` at submit. `counterKey` is for tests: it counts runs and overlapping runs of the same key in Redis (`demo:counter:{ownerId}:{key}:runs|overlaps`, expire after 1 hour).
 
 ---
 
