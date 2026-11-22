@@ -7,5 +7,7 @@ public enum AuditAction {
     TOKEN_REFRESH,
     TASK_CREATED,
     TASK_UPDATED,
-    TASK_DELETED
+    TASK_DELETED,
+    JOB_SUBMITTED,
+    JOB_CANCELLED
 }

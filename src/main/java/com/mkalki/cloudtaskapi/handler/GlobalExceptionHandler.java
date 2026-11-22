@@ -1,8 +1,15 @@
 package com.mkalki.cloudtaskapi.handler;
 
 import com.mkalki.cloudtaskapi.exception.*;
+import com.mkalki.cloudtaskapi.job.exception.ActiveJobLimitExceededException;
+import com.mkalki.cloudtaskapi.job.exception.IllegalJobTransitionException;
+import com.mkalki.cloudtaskapi.job.exception.InvalidJobRequestException;
+import com.mkalki.cloudtaskapi.job.exception.JobNotCancellableException;
+import com.mkalki.cloudtaskapi.job.exception.JobNotFoundException;
+import com.mkalki.cloudtaskapi.job.exception.PayloadTooLargeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -82,5 +89,61 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body("Invalid username or password");
+    }
+
+    @ExceptionHandler(JobNotFoundException.class)
+    public ResponseEntity<String> handleJobNotFoundException(
+            JobNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidJobRequestException.class)
+    public ResponseEntity<String> handleInvalidJobRequestException(
+            InvalidJobRequestException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(PayloadTooLargeException.class)
+    public ResponseEntity<String> handlePayloadTooLargeException(
+            PayloadTooLargeException ex) {
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ActiveJobLimitExceededException.class)
+    public ResponseEntity<String> handleActiveJobLimitExceededException(
+            ActiveJobLimitExceededException ex) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(JobNotCancellableException.class)
+    public ResponseEntity<String> handleJobNotCancellableException(
+            JobNotCancellableException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<String> handleOptimisticLockingFailure(
+            ObjectOptimisticLockingFailureException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("The job was changed by another request. Retry the request.");
+    }
+
+    @ExceptionHandler(IllegalJobTransitionException.class)
+    public ResponseEntity<String> handleIllegalJobTransitionException(
+            IllegalJobTransitionException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("The job cannot move from " + ex.getFrom() + " to " + ex.getTo() + ".");
     }
 }

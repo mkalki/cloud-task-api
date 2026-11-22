@@ -503,6 +503,47 @@ Protected endpoints require:
 Authorization: Bearer <JWT_TOKEN>
 ```
 
+### Job Endpoints
+
+Jobs are background work items. In this release they are stored and managed but not executed yet: a submitted job stays `PENDING` until the scheduler and workers arrive. Job endpoints live under `/api/v1` like the others.
+
+| **Method** | **Endpoint** | **Description** |
+|---|---|---|
+| POST | `/jobs` | Submit a job. Returns `201`, or `200` with the original job when the `Idempotency-Key` header was already used |
+| GET | `/jobs` | List your jobs. Supports `page`, `size` (1-100), `sort`, `status`, `type` |
+| GET | `/jobs/{id}` | Get one job with its attempts. Other users' jobs return `404` |
+| POST | `/jobs/{id}/cancel` | Cancel a job that has not finished. Cancelling twice is a no-op; finished jobs return `409` |
+
+Submit request body:
+
+```json
+{
+  "type": "demo.work",
+  "payload": { "durationMs": 500 },
+  "priority": 5,
+  "delaySeconds": 60,
+  "maxAttempts": 3,
+  "timeoutSeconds": 300
+}
+```
+
+Only `type` is required. Use `runAt` (ISO-8601 UTC) or `delaySeconds`, not both. Valid types are the registered handlers (currently `demo.work`).
+
+| **Rule** | **Result** |
+|---|---|
+| Unknown type, out-of-range field, `runAt` more than 365 days ahead | `400` |
+| Payload larger than 64 KB | `413` |
+| Missing or invalid token | `401` |
+| Too many requests, or the active-job limit is reached | `429` |
+
+Job settings (defaults shown):
+
+| **Property** | **Default** | **Meaning** |
+|---|---|---|
+| `cloudtask.jobs.max-active-per-user` | `1000` | Most BLOCKED, PENDING, QUEUED or RUNNING jobs one user may hold |
+| `cloudtask.jobs.max-payload-bytes` | `65536` | Largest accepted payload (serialized JSON) |
+| `cloudtask.jobs.max-schedule-ahead-days` | `365` | Furthest in the future a job may be scheduled |
+
 ---
 
 ## 📝 Example Task Request
