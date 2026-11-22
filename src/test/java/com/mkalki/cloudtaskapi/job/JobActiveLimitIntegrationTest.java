@@ -192,6 +192,9 @@ class JobActiveLimitIntegrationTest extends JobApiTestSupport {
                 .isInstanceOf(IllegalStateException.class);
 
         transactionTemplate.executeWithoutResult(status -> activeJobLock.lockFor(1L));
+        // An owner id above 2^31 is accepted by PostgreSQL (the bigint form takes the whole id).
+        transactionTemplate.executeWithoutResult(status -> activeJobLock.lockFor(3_000_000_000L));
+        transactionTemplate.executeWithoutResult(status -> activeJobLock.lockFor(Long.MAX_VALUE));
     }
 
     @Test

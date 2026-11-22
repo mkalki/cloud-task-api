@@ -17,10 +17,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class ActiveJobLock {
 
     /**
-     * First key of {@code pg_advisory_xact_lock(int, int)}. It marks the lock as
-     * "active-job cap" so other advisory locks added later cannot collide with it.
+     * Mixed into the lock key so this lock cannot collide with another advisory lock that
+     * uses a plain id as its key. Any fixed 64-bit constant works; this one is arbitrary.
      */
-    static final int ACTIVE_JOB_CAP_NAMESPACE = 1;
+    static final long ACTIVE_JOB_CAP_NAMESPACE = 0x6A0B_CA9E_5EED_0001L;
 
     private final JdbcTemplate jdbc;
 
@@ -29,15 +29,23 @@ public class ActiveJobLock {
     }
 
     /**
-     * Blocks until this transaction holds the lock for {@code ownerId}. The second key is the
-     * user id folded to an int; two users sharing a key only wait for each other, which is safe.
+     * Blocks until this transaction holds the lock for {@code ownerId}.
      */
     public void lockFor(Long ownerId) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // Outside a transaction the lock would be released as soon as the statement ends.
             throw new IllegalStateException("The active-job lock must be taken inside a transaction");
         }
-        jdbc.query("select pg_advisory_xact_lock(?, ?)", rs -> { },
-                ACTIVE_JOB_CAP_NAMESPACE, Long.hashCode(ownerId));
+        jdbc.query("select pg_advisory_xact_lock(?)", rs -> { }, lockKey(ownerId));
+    }
+
+    /**
+     * {@code users.id} is a BIGINT, so the single-bigint form {@code pg_advisory_xact_lock(bigint)}
+     * is used: the whole id fits, and ids above 2^31 cannot overflow. (The two-int form would
+     * force the id into 32 bits.) XOR with a constant is a bijection on 64-bit values, so two
+     * different users never get the same key, and the key differs from the bare id.
+     */
+    static long lockKey(long ownerId) {
+        return ownerId ^ ACTIVE_JOB_CAP_NAMESPACE;
     }
 }
