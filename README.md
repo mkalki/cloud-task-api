@@ -996,7 +996,7 @@ Deployment Success
 
 ## 🚀 Future Enhancements
 
-CloudTask v3 evolves the API into a distributed job orchestrator. Full plan: [docs/PRD.md](docs/PRD.md).
+CloudTask v3 evolves the API into a distributed job orchestrator, delivered one feature at a time:
 
 | **Feature** | **Scope** |
 |---|---|
