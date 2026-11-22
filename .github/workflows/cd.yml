@@ -41,7 +41,8 @@ jobs:
             echo "Pulling base images..."
             for attempt in 1 2 3; do
               if docker pull eclipse-temurin:21-jdk &&
-                 docker pull eclipse-temurin:21-jre; then
+                 docker pull eclipse-temurin:21-jre &&
+                 docker pull redis:7-alpine; then
                 break
               fi
 

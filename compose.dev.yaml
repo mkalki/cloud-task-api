@@ -1,0 +1,7 @@
+# Local debugging only. Publishes Redis on 127.0.0.1 so tools on this machine can reach it.
+# Usage: docker compose -f compose.yaml -f compose.dev.yaml up -d
+# Never use this file on EC2.
+services:
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"
