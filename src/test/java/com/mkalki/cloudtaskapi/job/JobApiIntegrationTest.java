@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -173,6 +174,27 @@ class JobApiIntegrationTest extends JobApiTestSupport {
 
         submit(token, "{\"type\": \"demo.work\", \"payload\": {\"blob\": \"" + payloadValue + "\"}}")
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void bodyAboveTheRequestSizeLimitIsRejectedBeforeParsing() throws Exception {
+        String token = registerAndLogin("job-huge");
+        // Not even valid JSON: a 400 here would mean Jackson parsed it, so 413 proves the filter ran first.
+        String huge = "{\"type\": \"demo.work\", \"payload\": " + "[".repeat(200_000);
+
+        submit(token, huge)
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(content().string("Request body exceeds 73728 bytes"));
+
+        assertThat(jobCountFor(token)).isZero();
+    }
+
+    @Test
+    void oversizedBodyIsRejectedEvenWithoutAToken() throws Exception {
+        mockMvc.perform(post("/api/v1/jobs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("x".repeat(100_000)))
+                .andExpect(status().isPayloadTooLarge());
     }
 
     @Test

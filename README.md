@@ -543,6 +543,7 @@ Job settings (defaults shown):
 | `cloudtask.jobs.max-active-per-user` | `1000` | Most BLOCKED, PENDING, QUEUED or RUNNING jobs one user may hold |
 | `cloudtask.jobs.max-payload-bytes` | `65536` | Largest accepted payload (serialized JSON) |
 | `cloudtask.jobs.max-schedule-ahead-days` | `365` | Furthest in the future a job may be scheduled |
+| `cloudtask.request-size.rules[n].method` / `.path` / `.max-size` | `POST` `/api/v1/jobs` `72KB` | Largest request body per path. Bodies above it get `413` before they are parsed. Setting any rule replaces the default list |
 
 ---
 
