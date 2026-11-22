@@ -7,6 +7,7 @@ import com.mkalki.cloudtaskapi.enums.AuditAction;
 import com.mkalki.cloudtaskapi.enums.AuditResourceType;
 import com.mkalki.cloudtaskapi.job.dto.CreateJobRequest;
 import com.mkalki.cloudtaskapi.job.dto.JobResponse;
+import com.mkalki.cloudtaskapi.job.dto.JobSummaryResponse;
 import com.mkalki.cloudtaskapi.job.exception.ActiveJobLimitExceededException;
 import com.mkalki.cloudtaskapi.job.exception.InvalidJobRequestException;
 import com.mkalki.cloudtaskapi.job.exception.JobNotCancellableException;
@@ -30,7 +31,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -42,8 +42,16 @@ public class JobService {
     static final int MAX_IDEMPOTENCY_KEY_LENGTH = 255;
     /** How often cancel re-reads and retries when another writer changes the status first. */
     static final int MAX_CANCEL_ATTEMPTS = 3;
-    private static final Set<String> SORTABLE_FIELDS =
-            Set.of("createdAt", "updatedAt", "runAt", "priority", "status", "type");
+    /**
+     * The only fields a client may sort by. Anything else is rejected before it reaches JPA,
+     * so a client cannot sort by payload (slow) or by a property it should not see.
+     * A List, not a Set, so the error message lists them in a fixed order.
+     */
+    static final List<String> SORTABLE_FIELDS =
+            List.of("createdAt", "updatedAt", "runAt", "priority", "status", "type");
+    /** The client's value is never echoed back, so the message cannot carry injected text. */
+    static final String INVALID_SORT_MESSAGE =
+            "sort must be field or field,asc or field,desc, where field is one of " + SORTABLE_FIELDS;
 
     private final JobRepository jobRepository;
     private final JobAttemptRepository attemptRepository;
@@ -124,7 +132,7 @@ public class JobService {
     }
 
     @Transactional(readOnly = true)
-    public Page<JobResponse> list(JobStatus status, String type, int page, int size, String sort) {
+    public Page<JobSummaryResponse> list(JobStatus status, String type, int page, int size, String sort) {
         Specification<Job> spec = JobSpecification.byOwnerId(currentUserId());
         if (status != null) {
             spec = spec.and(JobSpecification.byStatus(status));
@@ -133,7 +141,7 @@ public class JobService {
             spec = spec.and(JobSpecification.byType(type.trim()));
         }
         return jobRepository.findAll(spec, toPageable(page, size, sort))
-                .map(mapper::toResponse);
+                .map(mapper::toSummary);
     }
 
     /**
@@ -233,14 +241,16 @@ public class JobService {
             throw new InvalidJobRequestException("size must be between 1 and " + MAX_PAGE_SIZE);
         }
 
-        String[] parts = sort.split(",");
+        String[] parts = sort.split(",", -1);
         String field = parts[0].trim();
-        if (!SORTABLE_FIELDS.contains(field)) {
-            throw new InvalidJobRequestException(
-                    "Cannot sort by " + field + ". Allowed: " + SORTABLE_FIELDS);
+        if (parts.length > 2 || !SORTABLE_FIELDS.contains(field)) {
+            throw new InvalidJobRequestException(INVALID_SORT_MESSAGE);
         }
-        boolean descending = parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim());
-        Sort sortObject = (descending ? Sort.by(field).descending() : Sort.by(field).ascending())
+        String direction = parts.length == 2 ? parts[1].trim().toLowerCase(java.util.Locale.ROOT) : "asc";
+        if (!direction.equals("asc") && !direction.equals("desc")) {
+            throw new InvalidJobRequestException(INVALID_SORT_MESSAGE);
+        }
+        Sort sortObject = (direction.equals("desc") ? Sort.by(field).descending() : Sort.by(field).ascending())
                 .and(Sort.by("id"));
         return PageRequest.of(page, size, sortObject);
     }

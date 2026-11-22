@@ -510,7 +510,7 @@ Jobs are background work items. In this release they are stored and managed but 
 | **Method** | **Endpoint** | **Description** |
 |---|---|---|
 | POST | `/jobs` | Submit a job. Returns `201`, or `200` with the original job when the `Idempotency-Key` header was already used |
-| GET | `/jobs` | List your jobs. Supports `page`, `size` (1-100), `sort`, `status`, `type` |
+| GET | `/jobs` | List your jobs without their payloads. Supports `page`, `size` (1-100), `sort` (`createdAt`, `updatedAt`, `runAt`, `priority`, `status`, `type`, optionally `,asc` or `,desc`), `status`, `type` |
 | GET | `/jobs/{id}` | Get one job with its attempts. Other users' jobs return `404` |
 | POST | `/jobs/{id}/cancel` | Cancel a job that has not finished. Cancelling twice is a no-op; finished jobs return `409` |
 

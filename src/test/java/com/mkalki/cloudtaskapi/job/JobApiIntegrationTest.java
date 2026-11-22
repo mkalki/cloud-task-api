@@ -345,6 +345,39 @@ class JobApiIntegrationTest extends JobApiTestSupport {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void sortOutsideTheWhitelistIsRejectedWithoutEchoingTheInput() throws Exception {
+        String token = registerAndLogin("job-sort-bad");
+        String auth = "Bearer " + token;
+
+        for (String sort : List.of("<script>alert(1)</script>", "createdAt,sideways",
+                "createdAt,desc,extra", "ownerId,asc", "idempotencyKey", "createdAt,")) {
+            mockMvc.perform(get("/api/v1/jobs").param("sort", sort).header("Authorization", auth))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string(JobService.INVALID_SORT_MESSAGE));
+        }
+
+        mockMvc.perform(get("/api/v1/jobs").param("sort", "runAt").header("Authorization", auth))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/jobs").param("sort", "type,DESC").header("Authorization", auth))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void listRowsLeaveOutThePayloadButGetIncludesIt() throws Exception {
+        String token = registerAndLogin("job-list-payload");
+        String id = submitOk(token, "{\"type\": \"demo.work\", \"payload\": {\"blob\": \"" + "x".repeat(1000) + "\"}}");
+
+        mockMvc.perform(get("/api/v1/jobs").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(id))
+                .andExpect(jsonPath("$.content[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.content[0].payload").doesNotExist())
+                .andExpect(jsonPath("$.content[0].attempts").doesNotExist());
+
+        getJob(token, id).andExpect(jsonPath("$.payload.blob").exists());
+    }
+
     // ---------- cancel ----------
 
     @Test
